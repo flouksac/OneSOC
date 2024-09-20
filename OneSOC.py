@@ -141,41 +141,45 @@ def retrieve_user_needs():
         retrieve_user_needs()
 
 
-def is_service_active(service_name):
-    """Vérifie si un service est actif sur la machine (Linux)"""
-    try:
-        # Utilise systemctl pour vérifier si le service est actif
-        result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        return result.stdout.decode('utf-8').strip() == "active"
-    except Exception as e:
-        print(colored(f"Error checking service {service_name}: {e}", "red"))
-        return False
+def identify_service(components):
+    for component, info in components.items():
+        service_name = info["service"]
+        try :
+            result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            if result.stdout.decode('utf-8').strip() == "active":
+                info["status"] = "Active"
+            else:
+                info["status"] = "Inactive"
+        except Exception as e:
+            info["status"] = "Inactive"
+
+    return components
 
 
 def health_check():
     components = {
-        "Wazuh Manager": {"service": "wazuh-manager", "path": "/var/ossec"},
-        "Wazuh Indexer": {"service": "wazuh-indexer", "path": "/etc/wazuh-indexer"},
-        "Wazuh Dashboard": {"service": "wazuh-dashboard", "path": "/etc/wazuh-dashboard"},
-        #"Wazuh Agent": {"service": "wazuh-agent","path":"/var/ossec"},
+        "Wazuh Manager": {"service": "wazuh-manager", "status": None},
+        "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
+        "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
+        "Wazuh Agent": {"service": "wazuh-agent", "status": None},
         #"SELKS":
         # keepass
         # dfir iris
     }
 
-    installed_components = []
+    components = identify_service(components)
 
-    for component, checks in components.items():
-        service_installed = is_service_active(checks["service"])
-        file_installed = os.path.exists(checks["path"])
+    active_components = []
+    for component, info in components.items():
+        if info["status"] == "Active":
+            active_components.append(component.key())
 
-        if service_installed or file_installed:
-            installed_components.append(component)
+    if active_components :
+        print(colored(f"The following Wazuh service are already active : ", "light_green"))
+        for component in active_components:
+            print(f"{component.key()}")
 
-    if installed_components:
-        print(colored(f"The following Wazuh components are already installed: {', '.join(installed_components)}",
-                      "green"))
     else:
         print(colored("No Wazuh components found on this machine.", "yellow"))
 
