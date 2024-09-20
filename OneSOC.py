@@ -1,4 +1,6 @@
+import os
 import platform
+import subprocess
 
 from termcolor import colored
 
@@ -7,9 +9,9 @@ def banner():
     banner_lines = [
         colored(r"  )                      (         )            ", "blue"),
         colored(r"( /(                      )\ )   ( /(      (    ", "blue"),
-        colored(r" )\())             (      (()/(   )\())     )\  ", "cyan"),
+        colored(r" )\())             (      (()/(   )\())     )\  ", "light_blue"),
         colored(r"((_)\     (       ))\      /(_)) ((_)\    (((_) ", "cyan"),
-        colored(r"  ((_)    )\ )   /((_)    (_))     ((_)   )\___ ", "light_cyan"),
+        colored(r"  ((_)    )\ )   /((_)    (_))     ((_)   )\___ ", "cyan"),
         colored(r" / _ \   _(_/(  (_))      / __|   / _ \  ((/ __|", "light_cyan"),
         colored(r"| (_) | | ' \)) / -_)  -  \__ \  | (_) |  | (__ ", "white"),
         colored(r" \___/  |_||_|  \___|     |___/   \___/    \___|", "white"),
@@ -46,14 +48,18 @@ def introduction():
                               "   * Install the wazuh indexer first",
                               "   * Then install the wazuh server ",
                               "   * Then install the wazuh dashboard",
-                              "   * Optionally you can install SELKS (Suricata)"]
+                              "   * Optionally you can install SELKS (Suricata)",
+                              "   * Optionally you can install DFIR IRIS (Ticketing)",
+                              "   * Optionally you can install Keepass (password manager)",
+                              "   * Install agents"
+                              ]
 
     for message in recommendation_message:
         print(message)
 
 
 def compatibility_check():
-    print(colored("\nPerforming compatibility check...\n","light_cyan"))
+    print(colored("\nPerforming compatibility check...\n", "light_cyan"))
 
     compatible_os = ["Amazon Linux 2",
                      "CentOS 7", "CentOS 8",
@@ -79,12 +85,100 @@ def compatibility_check():
     print(f"Detected OS: {current_os}")
 
     if any(os_name in current_os for os_name in compatible_os):
-        print(colored(f"{current_os} is compatible with Wazuh!", "green"))
+        print(colored(f"{current_os} is compatible with Wazuh!", "light_green"))
     else:
         print(colored(f"WARNING: {current_os} is not officially supported by Wazuh.", "red"))
 
 
-    # next step : verify the wazuh install
+def retrieve_user_needs():
+    options = {
+        "1": "Full install of Wazuh in all-in-one architecture (Indexer + Manager + Dashboard)",
+        "2": "Install Wazuh Indexer",
+        "3": "Install Wazuh Manager",
+        "4": "Install Wazuh Dashboard",
+        "5": "Install SELKS (Suricata IDS)",
+        "6": "Install DFIR IRIS (Ticketing)",
+        "7": "Install KeePass (password manager)",
+        "8": "Deploy all agents in propagation mode",
+        "9": "Deploy agent on this computer",
+        "X": "Abort installation process"
+    }
+
+    options_message = [colored("\nWhat do you want to do?", "light_cyan"),
+                       colored("\n- Wazuh -", "white")]
+
+    for key, value in options.items():
+        if key == "5":
+            options_message.append(colored("\n- Other -", "white"))
+        if key == "8":
+            options_message.append(colored("\n- Agents -", "white"))
+        if key == "X":
+            options_message.append(colored(f"\n{key}. To Abort", "light_red"))
+        else:
+            options_message.append(f"{key}. {value}")
+
+    for message in options_message:
+        print(message)
+
+    choice = input(colored("\nSelect the option you want or abort (1-9/X): ", "white")).strip().upper()
+
+    if choice in options:
+        if choice == "X":
+            print(colored("Aborting installation process.", "light_red"))
+            return
+        else:
+            selected_option = options[choice]
+            print(colored("You have selected :", "cyan"), selected_option, "\n")
+
+            confirmation = input(colored("Are you sure of this choice? (y/N): ", "white")).strip().lower()
+
+            if confirmation == "y":
+                print(colored(f"\nProceeding with: {selected_option}...", "light_green"))
+            else:
+                retrieve_user_needs()
+    else:
+        print(colored("Invalid choice. Please try again.", "red"))
+        retrieve_user_needs()
+
+
+def is_service_active(service_name):
+    """Vérifie si un service est actif sur la machine (Linux)"""
+    try:
+        # Utilise systemctl pour vérifier si le service est actif
+        result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        return result.stdout.decode('utf-8').strip() == "active"
+    except Exception as e:
+        print(colored(f"Error checking service {service_name}: {e}", "red"))
+        return False
+
+
+def health_check():
+    components = {
+        "Wazuh Manager": {"service": "wazuh-manager", "path": "/var/ossec"},
+        "Wazuh Indexer": {"service": "wazuh-indexer", "path": "/etc/wazuh-indexer"},
+        "Wazuh Dashboard": {"service": "wazuh-dashboard", "path": "/etc/wazuh-dashboard"},
+        #"Wazuh Agent": {"service": "wazuh-agent","path":"/var/ossec"},
+        #"SELKS":
+        # keepass
+        # dfir iris
+    }
+
+    installed_components = []
+
+    for component, checks in components.items():
+        service_installed = is_service_active(checks["service"])
+        file_installed = os.path.exists(checks["path"])
+
+        if service_installed or file_installed:
+            installed_components.append(component)
+
+    if installed_components:
+        print(colored(f"The following Wazuh components are already installed: {', '.join(installed_components)}",
+                      "green"))
+    else:
+        print(colored("No Wazuh components found on this machine.", "yellow"))
+
 
 if __name__ == "__main__":
     banner()
@@ -92,7 +186,10 @@ if __name__ == "__main__":
     introduction()
     # 2. Check OS compatibility, does it support Wazuh?
     compatibility_check()
+    # TODO  inform user of what component there already is on the computer ...
+    health_check()
     # 3. Ask which component the user wants to install
+    retrieve_user_needs()
     # 3'.Ask other configuration settings (ip, name...) or use configuration file
     # 4. Verify that the selected component is valid and coherent
     # 5. Install dependencies + verify and troubleshoot
