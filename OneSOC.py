@@ -173,12 +173,12 @@ def health_check():
     active_components = []
     for component, info in components.items():
         if info["status"] == "Active":
-            active_components.append(component.keys())
+            active_components.append(component)
 
     if active_components :
         print(colored(f"The following Wazuh service are already active : ", "light_green"))
         for component in active_components:
-            print(f"{component.keys()}")
+            print(f"{component}")
 
     else:
         print(colored("No Wazuh components found on this machine.", "yellow"))
