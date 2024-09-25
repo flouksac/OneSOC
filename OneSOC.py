@@ -148,7 +148,7 @@ def is_docker_installed():
         return False
 
 
-def identify_service(components):
+def identify_service(components):  # in the future we should verify also the status "error, running ..."
     for component, info in components.items():
         service_name = info["service"]
         try:
@@ -196,12 +196,13 @@ def service_check():
         "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
         "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
         "Wazuh Agent": {"service": "wazuh-agent", "status": None},
+        # "KeePass": {"image": "keepass", "status": None},
     }
     containers = {
         "SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
         "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
         "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
-        # "KeePass": {"image": "keepass", "status": None},
+
     }
 
     components = identify_service(components)
