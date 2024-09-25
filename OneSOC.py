@@ -59,23 +59,10 @@ def introduction():
         print(message)
 
 
-def get_free_disk_space_gb():
-    total, used, free = shutil.disk_usage("/")
-    free_gb = free / (1024 ** 3)
-    return round(free_gb, 2)
+# = OS check ========================================================================================================= #
 
 
-def get_ram_in_gb():
-    ram = psutil.virtual_memory()
-    ram_gb = ram.total / (1024 ** 3)
-    return round(ram_gb, 2)
-
-
-def get_cpu_core_count():
-    return os.cpu_count()
-
-
-def compatibility_check():
+def os_check():
     print(colored("\nPerforming OS check...\n", "light_cyan"))
 
     compatible_os = ["Amazon Linux 2",
@@ -106,6 +93,25 @@ def compatibility_check():
     else:
         print(colored(f"WARNING: {current_os} is not officially supported by Wazuh.", "red"))
 
+
+# = Hardware check =================================================================================================== #
+def get_free_disk_space_gb():
+    total, used, free = shutil.disk_usage("/")
+    free_gb = free / (1024 ** 3)
+    return round(free_gb, 2)
+
+
+def get_ram_in_gb():
+    ram = psutil.virtual_memory()
+    ram_gb = ram.total / (1024 ** 3)
+    return round(ram_gb, 2)
+
+
+def get_cpu_core_count():
+    return os.cpu_count()
+
+
+def hardware_check():
     print(colored("\nPerforming hardware check...\n", "light_cyan"))
 
     free_disk_space = get_free_disk_space_gb()
@@ -129,6 +135,107 @@ def compatibility_check():
     else:
         print(colored(f"CPU cores: {cpu_cores} (not as much as we recommend, should be > 8 cores)", "yellow"))
 
+
+# = Service Check ==================================================================================================== #
+def is_docker_installed():
+    try:
+        result = subprocess.run(['docker', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode == 0:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def identify_service(components):
+    for component, info in components.items():
+        service_name = info["service"]
+        try:
+            result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            if result.stdout.decode('utf-8').strip() == "active":
+                info["status"] = "Active"
+            else:
+                info["status"] = "Inactive"
+        except Exception as e:
+            info["status"] = "Inactive"
+
+    return components
+
+
+def check_docker_status(containers):
+    for container, info in containers.items():
+        try:
+            result_image = subprocess.run(['docker', 'images', '-q', info['image']], stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE)
+            if result_image.returncode == 0 and result_image.stdout.strip():
+                info["status"] = "Image Found"
+            else:
+                info["status"] = "Image Not Found"
+
+            if info["status"] == "Image Found":
+                result_container = subprocess.run(
+                    ['docker', 'ps', '--filter', f'name={info["name"]}', '--format', '{{.Names}}'],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result_container.returncode == 0 and info["name"] in result_container.stdout.decode().strip().split(
+                        '\n'):
+                    info["status"] = "Container running"
+                else:
+                    info["status"] = "Container not running"
+        except Exception as e:
+            print(f"Erreur lors de la vérification Docker pour {info['name']} : {e}")
+    return containers
+
+
+def service_check():
+    print(colored("\nPerforming service check...\n", "light_cyan"))
+
+    components = {
+        "Wazuh Manager": {"service": "wazuh-manager", "status": None},
+        "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
+        "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
+        "Wazuh Agent": {"service": "wazuh-agent", "status": None},
+    }
+    containers = {
+        "SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
+        "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
+        "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
+        # "KeePass": {"image": "keepass", "status": None},
+    }
+
+    components = identify_service(components)
+
+    active_components = []
+    for component, info in components.items():
+        if info["status"] == "Active":
+            active_components.append(component)
+
+    if active_components:
+        print(colored(f"The following Wazuh service are already active : ", "light_green"))
+        for component in active_components:
+            print(f" - {component}")
+    else:
+        print(colored("No Wazuh components found on this machine.", "yellow"))
+
+    if is_docker_installed():
+        containers = check_docker_status(containers)
+
+        print(colored("Status of Docker containers :", "light_green"))
+        for container, info in containers.items():
+            print(f" - {container} : {info['status']}")
+    else:
+        print(colored("Docker is not installed on this machine ", "yellow"))
+
+
+# = Global check ===================================================================================================== #
+def health_check():
+    os_check()
+    hardware_check()
+    service_check()
+
+
+# = User need ======================================================================================================== #
 
 def retrieve_user_needs():
     options = {
@@ -180,115 +287,118 @@ def retrieve_user_needs():
         print(colored("Invalid choice. Please try again.", "red"))
         retrieve_user_needs()
 
+    match choice:
+        # 3'. Ask other configuration settings (ip, name...) or use configuration file
+        # depending on  the type of installation if necessary
 
-def identify_service(components):
-    for component, info in components.items():
-        service_name = info["service"]
-        try:
-            result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            if result.stdout.decode('utf-8').strip() == "active":
-                info["status"] = "Active"
-            else:
-                info["status"] = "Inactive"
-        except Exception as e:
-            info["status"] = "Inactive"
+        case "1":  # FULL INSTALL OF WAZUH
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_full_install_wazuh()
+            # install_dependencies_wazuh ()
+            # full_install_wazuh()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "2":  # INSTALL OF WAZUH INDEXER
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_wazuh_indexer()
+            # install_dependencies_wazuh_indexer ()
+            # install_wazuh_indexer()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
 
-    return components
-
-
-def is_docker_installed():
-    try:
-        result = subprocess.run(['docker', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if result.returncode == 0:
-            return True
-        else:
-            return False
-    except FileNotFoundError:
-        return False
-
-
-def check_docker_status(containers):
-    for container, info in containers.items():
-        try:
-            # Vérification de l'image Docker
-            result_image = subprocess.run(['docker', 'images', '-q', info['image']], stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE)
-            if result_image.returncode == 0 and result_image.stdout.strip():
-                info["status"] = "Image Found"
-            else:
-                info["status"] = "Image Not Found"
-
-            # Si l'image est trouvée, vérifier si le conteneur est en cours d'exécution
-            if info["status"] == "Image Found":
-                result_container = subprocess.run(
-                    ['docker', 'ps', '--filter', f'name={info["name"]}', '--format', '{{.Names}}'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                if result_container.returncode == 0 and info["name"] in result_container.stdout.decode().strip().split(
-                        '\n'):
-                    info["status"] = "Container running"
-                else:
-                    info["status"] = "Container not running"
-        except Exception as e:
-            print(f"Erreur lors de la vérification Docker pour {info['name']} : {e}")
-    return containers
-
-
-def health_check():
-    print(colored("\nPerforming service check...\n", "light_cyan"))
-
-
-    components = {
-        "Wazuh Manager": {"service": "wazuh-manager", "status": None},
-        "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
-        "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
-        "Wazuh Agent": {"service": "wazuh-agent", "status": None},
-    }
-    containers = {
-        "SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
-        "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
-        "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
-        "KeePass": {"image": "keepass", "status": None},
-    }
-
-    components = identify_service(components)
-
-    active_components = []
-    for component, info in components.items():
-        if info["status"] == "Active":
-            active_components.append(component)
-
-    if active_components:
-        print(colored(f"The following Wazuh service are already active : ", "light_green"))
-        for component in active_components:
-            print(f" - {component}")
-    else:
-        print(colored("No Wazuh components found on this machine.", "yellow"))
-
-    if is_docker_installed():
-        containers = check_docker_status(containers)
-
-        print(colored("Status of Docker containers :", "light_green"))
-        for container, info in containers.items():
-            print(f" - {container} : {info['status']}")
-    else:
-        print(colored("Docker is not installed on this machine ", "yellow"))
+        case "3":  # INSTALL OF WAZUH MANAGER
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_wazuh_manager()
+            # install_dependencies_wazuh_manager ()
+            # install_wazuh_manager()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "4":  # INSTALL OF WAZUH DASHBOARD
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_wazuh_dashboard()
+            # install_dependencies_wazuh_dashboard ()
+            # install_wazuh_dashboard()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "5":  # INSTALL OF SELKS
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_selks()
+            # install_dependencies_selks ()
+            # install_selks()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "6":  # INSTALL OF IRIS
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_full_install_wazuh()
+            # install_dependencies_iris ()
+            # install_iris()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "7":  # INSTALL OF Keepass
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_keepass()
+            # install_dependencies_keepass ()
+            # install_keepass()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
+        case "8":  # Deploy wazuh agent in propagation mode
+            # TBD
+            pass
+        case "9":  # INSTALL OF WAZUH AGENT LOCALLY
+            # at each steps display information, each comments is for a function.
+            # verify_able_to_install_agent()
+            # install_dependencies_wazuh_agent()
+            # install_wazuh_agent()
+            # verify that everything is installed correctly ()
+            # do network configuration ()
+            # do custom configuration to improve wazuh ()
+            # display success and recap ()
+            # done -> ask for next step installation or retrieve_user_needs()
+            pass
 
 
 if __name__ == "__main__":
     banner()
     # 1. Announce the goal of the script
     introduction()
-    # 2. Check OS compatibility, does it support Wazuh?
-    compatibility_check()
-    # 3. Verify the health of the ...
+    # 2. Check OS compatibility, does it support Wazuh? Verify the health of the already installed services
     health_check()  # TODO -> rendre cross plateform && améliorer le healthcheck
     # 3. Ask which component the user wants to install
     retrieve_user_needs()
-    # 3'.Ask other configuration settings (ip, name...) or use configuration file
+
+    """ # Old comments
     # 4. Verify that the selected component is valid and coherent
     # 5. Install dependencies + verify and troubleshoot
     # 6. Install the selected component(s) + verify and troubleshoot
     # 7. Configure connections + verify and troubleshoot
     # 8. Add custom configuration to improve Wazuh + verify and troubleshoot
     # 9. Deploy the agents in propagation mode
+    """
