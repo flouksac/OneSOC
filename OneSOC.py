@@ -118,7 +118,8 @@ def get_cpu_core_count():
 
 def hardware_check():
     print(colored("\nPerforming hardware check...\n", "light_cyan"))
-
+    
+    # Check Disk Free Space
     free_disk_space = get_free_disk_space_gb()
     if free_disk_space >= 250:
         print(colored(f"Free disk space: {free_disk_space} GB (sufficient)", "light_green"))
@@ -218,7 +219,7 @@ def service_check():
             active_components.append(component)
 
     if active_components:
-        print(colored(f"The following Wazuh service are already active : ", "light_green"))
+        print(colored("The following Wazuh service are already active : ", "light_green"))
         for component in active_components:
             print(f" - {component}")
     else:
@@ -236,6 +237,7 @@ def service_check():
 
 # = Global check ===================================================================================================== #
 def health_check():
+    
     os_check()
     hardware_check()
     service_check()
