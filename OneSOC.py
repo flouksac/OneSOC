@@ -144,7 +144,7 @@ def retrieve_user_needs():
 def identify_service(components):
     for component, info in components.items():
         service_name = info["service"]
-        try :
+        try:
             result = subprocess.run(['systemctl', 'is-active', service_name], stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             if result.stdout.decode('utf-8').strip() == "active":
@@ -157,15 +157,43 @@ def identify_service(components):
     return components
 
 
+def check_docker_status(containers):
+    for container, info in containers.items():
+        try:
+            # Vérification de l'image Docker
+            result_image = subprocess.run(['docker', 'images', '-q', info['name']], stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE)
+            if result_image.returncode == 0 and result_image.stdout.strip():
+                info["status"] = "Image Found"
+            else:
+                info["status"] = "Image Not Found"
+
+            # Si l'image est trouvée, vérifier si le conteneur est en cours d'exécution
+            if info["status"] == "Image Found":
+                result_container = subprocess.run(
+                    ['docker', 'ps', '--filter', f'name={info["name"]}', '--format', '{{.Names}}'],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result_container.returncode == 0 and info["name"] in result_container.stdout.decode().strip().split(
+                        '\n'):
+                    info["status"] = "Container running"
+                else:
+                    info["status"] = "Container not running"
+        except Exception as e:
+            print(f"Erreur lors de la vérification Docker pour {info['name']} : {e}")
+    return containers
+
+
 def health_check():
     components = {
         "Wazuh Manager": {"service": "wazuh-manager", "status": None},
         "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
         "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
         "Wazuh Agent": {"service": "wazuh-agent", "status": None},
-        #"SELKS":
-        # keepass
-        # dfir iris
+    }
+    containers = {
+        "SELKS": {"nom": "selks", "status": None},
+        "DFIR-IRIS": {"nom": "dfir-iris", "status": None},
+        "KeePass": {"nom": "keepass", "status": None},
     }
 
     components = identify_service(components)
@@ -175,13 +203,18 @@ def health_check():
         if info["status"] == "Active":
             active_components.append(component)
 
-    if active_components :
+    if active_components:
         print(colored(f"The following Wazuh service are already active : ", "light_green"))
         for component in active_components:
-            print(f"{component}")
-
+            print(f" - {component}")
     else:
         print(colored("No Wazuh components found on this machine.", "yellow"))
+
+    containers = check_docker_status(containers)
+
+    print(colored("Status of Docker containers :", "light_green"))
+    for container, info in containers.items():
+        print(f" - {container}")
 
 
 if __name__ == "__main__":
@@ -190,8 +223,8 @@ if __name__ == "__main__":
     introduction()
     # 2. Check OS compatibility, does it support Wazuh?
     compatibility_check()
-    # TODO  inform user of what component there already is on the computer ...
-    health_check()
+    # 3. Verify the health of the ...
+    health_check()  # TODO -> rendre cross plateform && améliorer le healthcheck
     # 3. Ask which component the user wants to install
     retrieve_user_needs()
     # 3'.Ask other configuration settings (ip, name...) or use configuration file
