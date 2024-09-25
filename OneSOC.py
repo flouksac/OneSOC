@@ -1,9 +1,14 @@
-import os
-import platform
-import subprocess
-import shutil
-from termcolor import colored
-import psutil
+def check_and_install_packages():
+    for package in REQUIRED_PACKAGES:
+        try:
+            importlib.import_module(package)
+        except ImportError:
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package],
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                importlib.import_module(package)
+            except subprocess.CalledProcessError:
+                sys.exit(1)
 
 
 def banner():
@@ -387,6 +392,15 @@ def retrieve_user_needs():
 
 
 if __name__ == "__main__":
+    # Dynamic import and installation of modules
+    import sys, os, importlib, subprocess
+
+    REQUIRED_PACKAGES = ["termcolor", "psutil", "shutil", "platform"]
+    check_and_install_packages()
+
+    import psutil, platform, shutil
+    from termcolor import colored
+
     banner()
     # 1. Announce the goal of the script
     introduction()
