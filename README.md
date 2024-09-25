@@ -25,6 +25,7 @@ The following components are deployed by OneSoc:
 
 1. Just run:
    ```bash
+   pip install -r requirement.txt
    git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && python3 OneSOC.py
    ````
 2. Enjoy !
