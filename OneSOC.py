@@ -1,8 +1,9 @@
 import os
 import platform
 import subprocess
-
+import shutil
 from termcolor import colored
+import psutil
 
 
 def banner():
@@ -58,8 +59,24 @@ def introduction():
         print(message)
 
 
+def get_free_disk_space_gb():
+    total, used, free = shutil.disk_usage("/")
+    free_gb = free / (1024 ** 3)
+    return round(free_gb, 2)
+
+
+def get_ram_in_gb():
+    ram = psutil.virtual_memory()
+    ram_gb = ram.total / (1024 ** 3)
+    return round(ram_gb, 2)
+
+
+def get_cpu_core_count():
+    return os.cpu_count()
+
+
 def compatibility_check():
-    print(colored("\nPerforming compatibility check...\n", "light_cyan"))
+    print(colored("\nPerforming OS check...\n", "light_cyan"))
 
     compatible_os = ["Amazon Linux 2",
                      "CentOS 7", "CentOS 8",
@@ -88,6 +105,29 @@ def compatibility_check():
         print(colored(f"{current_os} is compatible with Wazuh!", "light_green"))
     else:
         print(colored(f"WARNING: {current_os} is not officially supported by Wazuh.", "red"))
+
+    print(colored("\nPerforming hardware check...\n", "light_cyan"))
+
+    free_disk_space = get_free_disk_space_gb()
+    if free_disk_space >= 250:
+        print(colored(f"Free disk space: {free_disk_space} GB (sufficient)", "light_green"))
+    else:
+        print(colored(f"Free disk space: {free_disk_space} GB (not as much as we recommend, should be > 250 GB)",
+                      "yellow"))
+
+    # Check RAM
+    ram_gb = get_ram_in_gb()
+    if ram_gb >= 15.5:
+        print(colored(f"RAM: {ram_gb} GB (sufficient)", "light_green"))
+    else:
+        print(colored(f"RAM: {ram_gb} GB (not as much as we recommend, should be > 16 GB)", "yellow"))
+
+    # Check CPU cores
+    cpu_cores = get_cpu_core_count()
+    if cpu_cores >= 8:
+        print(colored(f"CPU cores: {cpu_cores} (sufficient)", "light_green"))
+    else:
+        print(colored(f"CPU cores: {cpu_cores} (not as much as we recommend, should be > 8 cores)", "yellow"))
 
 
 def retrieve_user_needs():
@@ -157,11 +197,22 @@ def identify_service(components):
     return components
 
 
+def is_docker_installed():
+    try:
+        result = subprocess.run(['docker', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode == 0:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
 def check_docker_status(containers):
     for container, info in containers.items():
         try:
             # Vérification de l'image Docker
-            result_image = subprocess.run(['docker', 'images', '-q', info['name']], stdout=subprocess.PIPE,
+            result_image = subprocess.run(['docker', 'images', '-q', info['image']], stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
             if result_image.returncode == 0 and result_image.stdout.strip():
                 info["status"] = "Image Found"
@@ -184,6 +235,9 @@ def check_docker_status(containers):
 
 
 def health_check():
+    print(colored("\nPerforming service check...\n", "light_cyan"))
+
+
     components = {
         "Wazuh Manager": {"service": "wazuh-manager", "status": None},
         "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
@@ -191,9 +245,10 @@ def health_check():
         "Wazuh Agent": {"service": "wazuh-agent", "status": None},
     }
     containers = {
-        "SELKS": {"nom": "selks", "status": None},
-        "DFIR-IRIS": {"nom": "dfir-iris", "status": None},
-        "KeePass": {"nom": "keepass", "status": None},
+        "SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
+        "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
+        "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
+        "KeePass": {"image": "keepass", "status": None},
     }
 
     components = identify_service(components)
@@ -210,11 +265,14 @@ def health_check():
     else:
         print(colored("No Wazuh components found on this machine.", "yellow"))
 
-    containers = check_docker_status(containers)
+    if is_docker_installed():
+        containers = check_docker_status(containers)
 
-    print(colored("Status of Docker containers :", "light_green"))
-    for container, info in containers.items():
-        print(f" - {container}")
+        print(colored("Status of Docker containers :", "light_green"))
+        for container, info in containers.items():
+            print(f" - {container} : {info['status']}")
+    else:
+        print(colored("Docker is not installed on this machine ", "yellow"))
 
 
 if __name__ == "__main__":
