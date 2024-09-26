@@ -20,12 +20,15 @@ The following components are deployed by OneSoc:
   - **Indexer**: Stores logs and events for analysis.
   - **Dashboard**: Visualizes security data through a web interface.
 - **Suricata**: High-performance network IDS/IPS, integrated through SELKS.
+
+## Requirements 
+
+you need python3.10 or better with pip installed 
   
 ## Installation
 
 1. Just run:
    ```bash
-   pip install -r requirement.txt
    git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && python3 OneSOC.py
    ````
 2. Enjoy !
