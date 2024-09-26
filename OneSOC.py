@@ -8,6 +8,8 @@ def check_and_install_packages():
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 importlib.import_module(package)
             except subprocess.CalledProcessError:
+                print(f"[ FATAL ERROR :( ]{package} is not installed, because it seems that pip is not installed "
+                      f"with this version of python ({sys.executable}), Install it and restart the script")
                 sys.exit(1)
 
 
@@ -80,8 +82,10 @@ def os_check():
     if os_name == "Linux":
         try:
             with open("/etc/os-release") as f:
-                os_info = {}
+                os_info = {"NAME": None, "VERSION_ID": None}
                 for line in f:
+                    if os_info["NAME"] is not None and os_info["VERSION_ID"] is not None:
+                        break
                     key, value = line.rstrip().split("=")
                     os_info[key] = value.strip('"')
 
@@ -118,7 +122,7 @@ def get_cpu_core_count():
 
 def hardware_check():
     print(colored("\nPerforming hardware check...\n", "light_cyan"))
-    
+
     # Check Disk Free Space
     free_disk_space = get_free_disk_space_gb()
     if free_disk_space >= 250:
@@ -237,7 +241,6 @@ def service_check():
 
 # = Global check ===================================================================================================== #
 def health_check():
-    
     os_check()
     hardware_check()
     service_check()
