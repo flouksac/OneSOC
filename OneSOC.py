@@ -319,6 +319,8 @@ def install_dependencies_wazuh_indexer(status):
         # try dnf
         pass
     else :
+        # install with apt -y -> debconf adduser procps
+
         # try apt
         # tryp apt-get
         pass
