@@ -1,11 +1,12 @@
 def check_and_install_packages():
+    os.system('color')
     for package in REQUIRED_PACKAGES:
         try:
             importlib.import_module(package)
         except ImportError:
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package],
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=subprocess.DEVNULL,
+                                      stderr=subprocess.DEVNULL)
                 importlib.import_module(package)
             except subprocess.CalledProcessError:
                 print(f"[ FATAL ERROR :( ]{package} is not installed, because it seems that pip is not installed "
@@ -14,19 +15,36 @@ def check_and_install_packages():
 
 
 def banner():
-    banner_lines = [
-        colored(r"  )                      (         )            ", "blue"),
-        colored(r"( /(                      )\ )   ( /(      (    ", "blue"),
-        colored(r" )\())             (      (()/(   )\())     )\  ", "light_blue"),
-        colored(r"((_)\     (       ))\      /(_)) ((_)\    (((_) ", "cyan"),
-        colored(r"  ((_)    )\ )   /((_)    (_))     ((_)   )\___ ", "cyan"),
-        colored(r" / _ \   _(_/(  (_))      / __|   / _ \  ((/ __|", "light_cyan"),
-        colored(r"| (_) | | ' \)) / -_)  -  \__ \  | (_) |  | (__ ", "white"),
-        colored(r" \___/  |_||_|  \___|     |___/   \___/    \___|", "white"),
-        colored("\n------------------ By OnlySOC ------------------\n", "cyan")]
+    banner_lines = [colored(r"  )                      (         )            ", "blue"),
+                    colored(r"( /(                      )\ )   ( /(      (    ", "blue"),
+                    colored(r" )\())             (      (()/(   )\())     )\  ", "light_blue"),
+                    colored(r"((_)\     (       ))\      /(_)) ((_)\    (((_) ", "cyan"),
+                    colored(r"  ((_)    )\ )   /((_)    (_))     ((_)   )\___ ", "cyan"),
+                    colored(r" / _ \   _(_/(  (_))      / __|   / _ \  ((/ __|", "light_cyan"),
+                    colored(r"| (_) | | ' \)) / -_)  -  \__ \  | (_) |  | (__ ", "white"),
+                    colored(r" \___/  |_||_|  \___|     |___/   \___/    \___|", "white"),
+                    colored("\n------------------ By OnlySOC ------------------\n", "cyan")]
 
     for lines in banner_lines:
         print(lines)
+
+
+def verify_is_root():
+    try:
+        if os.geteuid() != 0:
+            print(
+                colored("[ YOU HAVE NOT RUN WITH ROOT PERMISSIONS :( ] Please run again this script with sudo", "red"))
+            exit(1)
+    except:
+        try:
+            if not ctypes.windll.shell32.IsUserAnAdmin():
+                print(colored("[ YOU HAVE NOT RUN WITH ADMIN PERMISSIONS :( ] Please run again this script "
+                              "with admin right", "red"))
+                exit(1)
+
+        except:
+            print(colored("[ FATAL ERROR :( ] can't find a way to see if you have admin/root rights", "red"))
+            exit(1)
 
 
 def introduction():
@@ -53,14 +71,11 @@ def introduction():
                               "   | Ubuntu 16.04, 18.04, 20.04, 22.04 | | 250                        |  ",
                               "   +-----------------------------------+ +----------------------------+  ",
                               "\n - Respect these steps, whatever is it a all-in-one install or a cluster install :",
-                              "   * Install the wazuh indexer first",
-                              "   * Then install the wazuh server ",
+                              "   * Install the wazuh indexer first", "   * Then install the wazuh server ",
                               "   * Then install the wazuh dashboard",
                               "   * Optionally you can install SELKS (Suricata)",
                               "   * Optionally you can install DFIR IRIS (Ticketing)",
-                              "   * Optionally you can install Keepass (password manager)",
-                              "   * Install agents"
-                              ]
+                              "   * Optionally you can install Keepass (password manager)", "   * Install agents"]
 
     for message in recommendation_message:
         print(message)
@@ -71,11 +86,6 @@ def introduction():
 
 def os_check():
     print(colored("\nPerforming OS check...\n", "light_cyan"))
-
-    compatible_os = ["Amazon Linux 2",
-                     "CentOS 7", "CentOS 8",
-                     "Red Hat Enterprise Linux 7", "Red Hat Enterprise Linux 8", "Red Hat Enterprise Linux 9",
-                     "Ubuntu 16.04", "Ubuntu 18.04", "Ubuntu 20.04", "Ubuntu 22.04"]
 
     os_name, os_version = platform.system(), platform.release()
 
@@ -97,23 +107,25 @@ def os_check():
 
     print(f"Detected OS: {current_os}")
 
-    if any(os_name in current_os for os_name in compatible_os):
+    if any(os_name in current_os for os_name in COMPATIBLE_OS):
         print(colored(f"{current_os} is compatible with Wazuh!", "light_green"))
     else:
         print(colored(f"WARNING: {current_os} is not officially supported by Wazuh.", "red"))
+
+    return current_os
 
 
 # = Hardware check =================================================================================================== #
 def get_free_disk_space_gb():
     total, used, free = shutil.disk_usage("/")
     free_gb = free / (1024 ** 3)
-    return round(free_gb, 2)
+    return round(free_gb, 0)
 
 
 def get_ram_in_gb():
     ram = psutil.virtual_memory()
     ram_gb = ram.total / (1024 ** 3)
-    return round(ram_gb, 2)
+    return round(ram_gb, 0)
 
 
 def get_cpu_core_count():
@@ -123,8 +135,11 @@ def get_cpu_core_count():
 def hardware_check():
     print(colored("\nPerforming hardware check...\n", "light_cyan"))
 
+    hardware = {"FREE_SPACE": None, "RAM": None, "CPU": None}
+
     # Check Disk Free Space
     free_disk_space = get_free_disk_space_gb()
+    hardware["FREE_SPACE"] = free_disk_space
     if free_disk_space >= 250:
         print(colored(f"Free disk space: {free_disk_space} GB (sufficient)", "light_green"))
     else:
@@ -133,6 +148,7 @@ def hardware_check():
 
     # Check RAM
     ram_gb = get_ram_in_gb()
+    hardware["RAM"] = ram_gb
     if ram_gb >= 15.5:
         print(colored(f"RAM: {ram_gb} GB (sufficient)", "light_green"))
     else:
@@ -140,10 +156,12 @@ def hardware_check():
 
     # Check CPU cores
     cpu_cores = get_cpu_core_count()
+    hardware["CPU"] = cpu_cores
     if cpu_cores >= 8:
         print(colored(f"CPU cores: {cpu_cores} (sufficient)", "light_green"))
     else:
         print(colored(f"CPU cores: {cpu_cores} (not as much as we recommend, should be > 8 cores)", "yellow"))
+    return hardware
 
 
 # = Service Check ==================================================================================================== #
@@ -201,19 +219,17 @@ def check_docker_status(containers):
 def service_check():
     print(colored("\nPerforming service check...\n", "light_cyan"))
 
-    components = {
-        "Wazuh Manager": {"service": "wazuh-manager", "status": None},
-        "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
-        "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
-        "Wazuh Agent": {"service": "wazuh-agent", "status": None},
-        # "KeePass": {"image": "keepass", "status": None},
-    }
-    containers = {
-        "SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
-        "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
-        "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
+    components = {"Wazuh Manager": {"service": "wazuh-manager", "status": None},
+                  "Wazuh Indexer": {"service": "wazuh-indexer", "status": None},
+                  "Wazuh Dashboard": {"service": "wazuh-dashboard", "status": None},
+                  "Wazuh Agent": {"service": "wazuh-agent", "status": None},
+                  # "KeePass": {"image": "keepass", "status": None},
+                  }
+    containers = {"SELKS": {"image": "ghcr.io/stamusnetworks/scirius", "name": "scirius", "status": None},
+                  "DFIR-IRIS": {"image": "iriswebapp_app", "name": "iriswebapp_app", "status": None},
+                  "MISP": {"image": "ghcr.io/nukib/misp", "name": "misp", "status": None},
 
-    }
+                  }
 
     components = identify_service(components)
 
@@ -238,32 +254,84 @@ def service_check():
     else:
         print(colored("Docker is not installed on this machine ", "yellow"))
 
+    return {"COMPONENT": components, "SERVICE": containers}
+
 
 # = Global check ===================================================================================================== #
 def health_check():
-    os_check()
-    hardware_check()
-    service_check()
+    # {"OS": "SUPPORTED LINUX", "HARDWARE": {"FREE_SPACE":200,"RAM":13.1,"CPU":4}, "SERVICE": {...}}
+    return {"OS": os_check(),
+            "HARDWARE": hardware_check(),
+            "SERVICE": service_check()}
 
 
 # = User need ======================================================================================================== #
+def verify_able_to_install_wazuh_indexer(status):
+    def ask_confirmation(message):
+        answer = input(colored(message, "white"))
+        while answer.lower() not in ["y", "n"]:
+            answer = input(colored(message, "white"))
+        return answer.lower() == "y"
 
-def retrieve_user_needs():
-    options = {
-        "1": "Full install of Wazuh in all-in-one architecture (Indexer + Manager + Dashboard)",
-        "2": "Install Wazuh Indexer",
-        "3": "Install Wazuh Manager",
-        "4": "Install Wazuh Dashboard",
-        "5": "Install SELKS (Suricata IDS)",
-        "6": "Install DFIR IRIS (Ticketing)",
-        "7": "Install KeePass (password manager)",
-        "8": "Deploy all agents in propagation mode",
-        "9": "Deploy agent on this computer",
-        "X": "Abort installation process"
-    }
+    # OS check
+    if not any(os_name in status["OS"] for os_name in COMPATIBLE_OS):
+        if "windows" in status["OS"].lower():
+            print(colored("Stopping installation script for Wazuh Indexer, you can't install wazuh indexer on windows",
+                          "light_red"))
+            retrieve_user_needs(status)
+            return
 
-    options_message = [colored("\nWhat do you want to do?", "light_cyan"),
-                       colored("\n- Wazuh -", "white")]
+        print(colored(f"\n[WARNING] It seems like your current OS ({status['OS']}) is not officially supported by "
+                      f"Wazuh. Continuing this script may fail or break something.", "red"))
+        if not ask_confirmation("Are you sure you want to continue ? (y/N) "):
+            print(colored("Stopping installation script for Wazuh Indexer, back to menu", "light_red"))
+            retrieve_user_needs(status)
+            return
+    else:
+        print(colored("\nGood OS to install Wazuh Indexer.", "light_green"))
+
+    # Hardware check
+    if status["HARDWARE"]["FREE_SPACE"] < 10 or status["HARDWARE"]["RAM"] < 3 or status["HARDWARE"]["CPU"] < 2:
+        print(colored("\n[WARNING] You may need more free disk space, more RAM, or more CPU to install Wazuh Indexer.",
+                      "red"))
+        if not ask_confirmation("Are you sure you want to continue ? (y/N) "):
+            print(colored("Stopping installation script for Wazuh Indexer, back to menu", "light_red"))
+            retrieve_user_needs(status)
+            return
+    else:
+        print(colored("\nMinimal hardware requirements are respected to install Wazuh Indexer.", "light_green"))
+
+    # Service check
+    if status["SERVICE"]["COMPONENT"]["Wazuh Indexer"]["status"] == "Active":
+        print(colored("\n It seems like Wazuh Indexer is already installed.", "light_red"))
+        retrieve_user_needs(status)
+
+    # -> Check on the ip range if there are other indexer...
+
+
+def install_dependencies_wazuh_indexer(status):
+    print(colored("\nInstalling Wazuh Indexer dependencies...\n", "light_green"))
+
+    if any(distro in status["OS"].lower() for distro in ["centos", "rocky", "red hat", "fedora"]):
+        # install curl, tar, coreutils
+
+        # try yum
+        # try dnf
+        pass
+    else :
+        # try apt
+        # tryp apt-get
+        pass
+
+
+def retrieve_user_needs(status):
+    options = {"1": "Full install of Wazuh in all-in-one architecture (Indexer + Manager + Dashboard)",
+               "2": "Install Wazuh Indexer", "3": "Install Wazuh Manager", "4": "Install Wazuh Dashboard",
+               "5": "Install SELKS (Suricata IDS)", "6": "Install DFIR IRIS (Ticketing)",
+               "7": "Install KeePass (password manager)", "8": "Deploy all agents in propagation mode",
+               "9": "Deploy agent on this computer", "X": "Abort installation process"}
+
+    options_message = [colored("\nWhat do you want to do?", "light_cyan"), colored("\n- Wazuh -", "white")]
 
     for key, value in options.items():
         if key == "5":
@@ -293,10 +361,10 @@ def retrieve_user_needs():
             if confirmation == "y":
                 print(colored(f"\nProceeding with: {selected_option}...", "light_green"))
             else:
-                retrieve_user_needs()
+                retrieve_user_needs(status)
     else:
         print(colored("Invalid choice. Please try again.", "red"))
-        retrieve_user_needs()
+        retrieve_user_needs(status)
 
     match choice:
         # 3'. Ask other configuration settings (ip, name...) or use configuration file
@@ -315,8 +383,13 @@ def retrieve_user_needs():
             pass
         case "2":  # INSTALL OF WAZUH INDEXER
             # at each steps display information, each comments is for a function.
-            # verify_able_to_install_wazuh_indexer()
-            # install_dependencies_wazuh_indexer ()
+            print(colored("Verify prerequisites...", "light_green"))
+            verify_able_to_install_wazuh_indexer(status)
+
+            print(colored("\nInstalling Wazuh Indexer dependencies...", "light_green"))
+            install_dependencies_wazuh_indexer(status)
+
+
             # install_wazuh_indexer()
             # verify that everything is installed correctly ()
             # do network configuration ()
@@ -400,19 +473,26 @@ if __name__ == "__main__":
     # Dynamic import and installation of modules
     import sys, os, importlib, subprocess
 
-    REQUIRED_PACKAGES = ["termcolor", "psutil", "shutil", "platform"]
+    REQUIRED_PACKAGES = ["termcolor", "psutil", "shutil", "platform", "ctypes"]
     check_and_install_packages()
 
     import psutil, platform, shutil
     from termcolor import colored
+    import ctypes
 
     banner()
+
+    verify_is_root()
+
+    COMPATIBLE_OS = ["Amazon Linux 2", "CentOS 7", "CentOS 8", "Red Hat Enterprise Linux 7",
+                     "Red Hat Enterprise Linux 8", "Red Hat Enterprise Linux 9", "Ubuntu 16.04", "Ubuntu 18.04",
+                     "Ubuntu 20.04", "Ubuntu 22.04"]
     # 1. Announce the goal of the script
     introduction()
     # 2. Check OS compatibility, does it support Wazuh? Verify the health of the already installed services
-    health_check()  # TODO -> rendre cross plateform && améliorer le healthcheck
+    health_status = health_check()  # TODO -> rendre cross platform && améliorer le healthcheck
     # 3. Ask which component the user wants to install
-    retrieve_user_needs()
+    retrieve_user_needs(health_status)
 
     """ # Old comments
     # 4. Verify that the selected component is valid and coherent
