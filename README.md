@@ -29,6 +29,6 @@ you need python3.10 or better with pip installed
 
 1. Just run:
    ```bash
-   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && python3 OneSOC.py
+   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && sudo python3 OneSOC.py
    ````
 2. Enjoy !
