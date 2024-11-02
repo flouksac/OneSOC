@@ -1,6 +1,8 @@
 # OneSOC
 OneSoc is a project aimed at building a unified installation script to deploy a Security Operations Center (SOC) in one go, "one shot" style.
 
+``` /!\ Onesoc is at a very early stage of development, so don't expect it to work 100%. /!\ ```
+
 ## Project Overview
 
 The goal of this project is to create a single installation script that provides flexibility in deploying a SOC. You can either deploy **Wazuh** on a single server or distribute its components (manager, indexer, dashboard) across multiple machines. The script handles the interconnection between components automatically or via a provided configuration file.
