@@ -25,12 +25,12 @@ The following components are deployed by OneSoc:
 
 ## Requirements 
 
-you need python3.10 or better with pip installed 
+you need a cli access and admin privileges
   
 ## Installation
 
 1. Just run:
    ```bash
-   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && sudo python3 OneSOC.py
+   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && sudo . ./run.sh
    ````
 2. Enjoy !
