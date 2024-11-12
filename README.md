@@ -31,6 +31,6 @@ you need a cli access and admin privileges
 
 1. Just run:
    ```bash
-   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && sudo . ./run.sh
+   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && . ./run.sh
    ````
 2. Enjoy !
