@@ -1,4 +1,6 @@
 from termcolor import colored
+import os
+os.system('color')
 
 class View:
     def __init__(self, verbosity = 2) -> None:
@@ -9,6 +11,9 @@ class View:
         # 3 -> detail
         # 4 -> debug
         self.verbosity = verbosity
+        
+    def set_verbosity(self,level):
+        self.verbosity=level
         
     def display(self,message:str,level:int, context:str="", color:str=None) :
         """print message depending of the verbosity of the programme and the message level info
@@ -26,18 +31,18 @@ class View:
         
         if self.verbosity >= level:
 
-            context_mapping = {"fatal":   ("red",    "☠️ "),
-                               "error":   ("red",    "❌ "),
-                               "success": ("green",  "✔️ "),
-                               "warning": ("yellow", "⚠️ "),}
+            context_mapping = {"fatal":   ("red",    "☠️"),
+                               "error":   ("red",    "❌"),
+                               "success": ("green",  "✔️"),
+                               "warning": ("yellow", "⚠️"),}
 
             # Assigne la couleur et le symbole basés sur le contexte si aucune couleur n'est spécifiée
             if not color:
-
+                
                 for keyword, (default_color, symbol) in context_mapping.items():
                     if keyword in context.lower():
                         color = default_color
-                        context = symbol + context
+                        context = symbol +"  "+ context
                         break
                 else:
                     color = "white"
