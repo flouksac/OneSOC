@@ -1,0 +1,19 @@
+Info:
+  description: Tell you which components of the SOC are on this host,\n if you specify the component it will only show information about it
+  command_description: (--info | --info "component1" "component2")
+
+Healthcheck:
+  description: Tell you if the components of the SOC on this host are healthy,\n if you specify the component it will only show information about it
+  command_description: (--healthcheck | --healthcheck "component1" "component2")
+
+Install:
+  description: Try to install the given component on host if possible,\n You need to specify at least a component,\n You should specify option relative to the component,\n look at --list-install-option
+  command_description: (--install "component1" "component2")
+
+Config:
+  description: Try to apply some configuration on the component on this host if possible.\n You need to specify at least a component.\n You should specify option relative to the component,\n look at --list-config-option
+  command_description: (--config "component1")
+
+Repair:
+  description: Try to fix a bad install of the given components.\n You need to specify at least a component.
+  command_description: (--repair "component1" "component2")

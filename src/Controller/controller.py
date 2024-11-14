@@ -1,7 +1,10 @@
 import argparse
 from Model.load_yaml import YamlLoader
 from Model.platform import Platform
+from Model.Action.action import get_actions
+from Model.Component.component import get_options
 
+from termcolor import colored
 from View.view import View
 
 class Controller:
@@ -11,51 +14,65 @@ class Controller:
         self.args = None
 
     def parse_arguments(self):
-        parser = argparse.ArgumentParser(prog="OneSOC",description="OneSOC deployment script",formatter_class=argparse.RawTextHelpFormatter)
-        parser.add_argument('config_path', type=str, default="../config.yaml", nargs='?' ,
-                            help="configuration file path -> default : '../config.yaml'")
+        parser = argparse.ArgumentParser(prog="OneSOC",description="OneSOC deployment script",add_help=False)
+        
+        group_positional_arguments = parser.add_argument_group(colored("Positional arguments","cyan"))
+        group_positional_arguments.add_argument('config_path', type=str, default="../config.yaml", nargs='?' ,
+                            help="configuration file path (default: %(default)s)")
 
-        parser.add_argument('-v', '--verbosity', type=int,choices=[0, 1, 2, 3, 4], default=2, required=False,
+        group_options = parser.add_argument_group(colored("Options","cyan"))
+        group_options.add_argument('-h', '--help', action='help', help="Show this help message and exit")
+        group_options.add_argument('-v', '--verbosity', type=int,choices=[0, 1, 2, 3, 4], default=2, required=False,
                             help="verbosity level (default: %(default)s)", metavar='Int')
 
 
         # List possibility
-        parser.add_argument('-lA','--list-action', action='store_true',
+        group_list = parser.add_argument_group(colored("Listing flags","cyan"))
+        group_list.add_argument('-lA','--list-action', action='store_true',
                             help="List all possible action")
 
-        parser.add_argument('-lO','--list-option', action='store_true',
+        group_list.add_argument('-lO','--list-option', action='store_true',
                             help="List all option for each action")
 
-        parser.add_argument('-lC','--list-component', action='store_true',
+        group_list.add_argument('-lC','--list-component', action='store_true',
                             help="List all components that can be installed")
 
-        parser.add_argument('-lIO','--list-install-option', nargs='*',
+        group_list.add_argument('--list-install-option', nargs='*', metavar='\"COMPONENT\"',
                             help="List all option of the given component to install")
 
 
         # Actions "read only"
-        parser.add_argument('--info', nargs='*', help="Informations sur les composants installés")
-        parser.add_argument('--healthcheck', nargs='*', help="Vérifie la santé des composants")
+        group_read = parser.add_argument_group(colored("Read-only flags","cyan"))
+        group_read.add_argument('--info', nargs='*',metavar='\"COMPONENT\"', help="Informations sur les composants installés")
+        group_read.add_argument('--healthcheck', nargs='*', metavar='COMPONENT', help="Vérifie la santé des composants")
+
 
         # Action Installation
-        parser.add_argument('--install', nargs='+', help="Installe un ou plusieurs composants")
-        parser.add_argument('--install-option', nargs='+', help="Options d'installation pour les composants")
+        group_install = parser.add_argument_group(colored("Installation flags","cyan"))
+        group_install.add_argument('--install', nargs='+',metavar='\"COMPONENT\"', help="Installe un ou plusieurs composants")
+        group_install.add_argument('--install-option', nargs='+',metavar='\"OPTION=VALUE\"', help="Options d'installation pour les composants")
 
         # Action Config
-        parser.add_argument('--config', type=str, help="Met à jour la configuration d'un composant")
-        parser.add_argument('--config-option', nargs='+', help="Options d'installation pour les composants")
+        group_config = parser.add_argument_group(colored("Configuration flags","cyan"))
+        group_config.add_argument('--config', type=str, metavar='\"COMPONENT\"',help="Met à jour la configuration d'un composant")
+        group_config.add_argument('--config-option', nargs='+',metavar='\"OPTION=VALUE\"', help="Options d'installation pour les composants")
 
         # Action Repair
-        parser.add_argument('--repair', nargs='*',
+        group_repair = parser.add_argument_group(colored("Reparation flags","cyan"))
+        group_repair.add_argument('--repair', nargs='*',metavar='\"COMPONENT\"',
                             help="Répare un ou plusieurs composants ou tous les composants défectueux")
 
         self.args = parser.parse_args()
 
+
     def parse_action(self):
-        if self.args.list_action:
-            self.view.list_action()
+        
+        if self.args.list_action:    
+            self.view.list_action(get_actions())
+
 
         elif self.args.list_option:
+            self.view.list_option(get_options())
             print("Liste des options disponibles pour les actions : [...]")
 
         elif self.args.list_install_option is not None:
@@ -70,7 +87,7 @@ class Controller:
 
 
 
-        elif any([self.args.info, self.args.healthcheck, self.args.install, self.args.apply_config, self.args.repair]):
+        elif any([self.args.info, self.args.healthcheck, self.args.install, self.args.config, self.args.repair]):
             if self.args.info is not None:
                 if len(self.args.info) == 0:
                     print("Informations pour tous les composants installés : [...]")
@@ -90,15 +107,16 @@ class Controller:
                     print(
                         f"Installation des composants {', '.join(self.args.install)} avec les options {self.args.install_option}")
 
-            if self.args.apply_config:
-                print(f"Mise à jour de la configuration pour le composant {self.args.apply_config}.")
+            if self.args.config:
+                print(f"Mise à jour de la configuration pour le composant {self.args.config}.")
 
             if self.args.repair is not None:
                 if len(self.args.repair) == 0:
                     print("Réparation de tous les composants défectueux : [...]")
                 else:
                     print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
-
+        
+        
     def load_model(self, config_path):
         try :
             self.model["Platform"] = Platform()

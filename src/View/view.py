@@ -1,6 +1,6 @@
 from termcolor import colored
 from Utils.os_info import get_os_type
-import os
+import os,re
 
 if get_os_type()=="Windows" : os.system("color")
 
@@ -134,40 +134,24 @@ class View:
             for message in recommendation_message:
                 print(message)
 
-    def list_action(self):
+    def list_action(self,data:dict):
         actions = [
             colored("The possible actions you can do are :\n","light_cyan"),
-
-            " - Info :",
-            colored("   (--info | --info \"component1\" \"component2\" )","cyan"),
-            colored("   Tell you which components of the SOC are on this host, ","light_grey"),
-            colored("   if you specify the component it will only show information about it\n","light_grey"),
-
-            " - Healthcheck ",
-            colored("   (--healthcheck | --healthcheck \"component1\" \"component2\" )","cyan"),
-            colored("   Tell you if the components of the SOC on this host are healthy ", "light_grey"),
-            colored("   if you specify the component it will only show information about it\n", "light_grey"),
-
-            " - Install ",
-            colored("   (--install \"component1\" \"component2\" )", "cyan"),
-            colored("   Try to install the given component on host if possible, ", "light_grey"),
-            colored("   You need to specify at least a component", "light_grey"),
-            colored("   You should specify option relative to the component, look at ", "light_grey"),
-            colored("   --list-install-option \n","cyan"),
-
-            " - Config ",
-            colored("   (--config \"component1\" )", "cyan"),
-            colored("   Try to apply some configuration on the component on this host if possible", "light_grey"),
-            colored("   You need to specify at least a component", "light_grey"),
-            colored("   You should specify option relative to the component, look at ", "light_grey"),
-            colored("   --list-config-option \n", "cyan"),
-
-            " - Repair ",
-            colored("   (--repair \"component1\" \"component2\" )", "cyan"),
-            colored("   Try to fix a bad install of the given components ", "light_grey"),
-            colored("   You need to specify at least a component", "light_grey"),
         ]
-
+        
+        for key,value in data.items():
+            actions.append(" - "+key+" :")
+            actions.append(colored("   "+value['command_description'], "cyan"),)
+            actions.append(colored("   "+value['description'].replace(r'\n','\n  ')+"\n","light_grey"))
+            
         for line in actions:
             print(line)
 
+    # Easter Egg
+    def display_themis_the_cat(self):
+        print("\n"+colored( " _._     _,-'\"\"`-._\n"
+                            "(,-.`._,'(       |\`-/|\n"
+                            "    `-.-' \ )-`( , o o)\n"
+                            "           `-    \`_`\"'-\n",
+                            'yellow')+"\n")
+        return ""
