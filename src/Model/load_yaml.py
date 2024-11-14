@@ -3,7 +3,8 @@ import yaml
 class YamlLoader:
     def __init__(self, config_file:str) -> None:
         self.config_file = config_file
-        self.data = None
+        self.data:dict = None
+        self.load_config()
         
     def load_config(self):
         try : 
