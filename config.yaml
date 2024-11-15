@@ -1,1 +1,23 @@
+Wazuh-Indexer:
+  Type: service
+  description: zaza
+  Platform:
+    ram: 16
+    free_space: 250
+    cpu_core: 8
+    os:
+      - Ubuntu lts 22,04
+      - Amazon linux 2
+    admin: True
+  Actions:
+    - Info
+    - Healthcheck
+    - Install
+    - config
+    - repair
+  Options:
+    ip: "USER HAS TO PROVIDE THIS"
+    port: 1515
 
+
+    

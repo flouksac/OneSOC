@@ -2,7 +2,7 @@ import argparse
 from Model.load_yaml import YamlLoader
 from Model.platform import Platform
 from Model.Action.action import get_actions
-from Model.Component.component import get_options
+#from Model.Component.component import get_options
 
 from termcolor import colored
 from View.view import View
@@ -72,7 +72,7 @@ class Controller:
 
 
         elif self.args.list_option:
-            self.view.list_option(get_options())
+            #self.view.list_option(get_options())
             print("Liste des options disponibles pour les actions : [...]")
 
         elif self.args.list_install_option is not None:
