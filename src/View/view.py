@@ -2,6 +2,8 @@ from termcolor import colored
 from Utils.os_info import get_os_type
 import os,re
 from Model.component import Component 
+from Model.action import Action 
+from Model.option import Option
 
 if get_os_type()=="Windows" : os.system("color")
 
@@ -137,34 +139,48 @@ class View:
 
    
     def list_component(self,data:list[Component]):
-        output = []
+        output = [
+            colored("The different component we take in charges are the following :\n","light_cyan"),
+        ]
         
         for component in data:
-            output.append(component.name+" : ")
-            output.append("  Description : ")
-            
-            output.append("    "+component.description.replace(r'\n','\n   '))
-            
-            output.append("  Options : ")
-            for option in component.options : 
-                output.append("    "+str(option))
-            #for platform in component.supported_platform : 
-            #    output.append("   "+platform)
-            output.append(" ")
+            output.append(" - "+component.name+" : ")
+            output.append(colored("   "+component.role,"cyan"))
+            output.append(colored("   "+component.description.replace(r'\n','\n  '),"light_grey"))
         for line in output:
             print (line)
 
-    def list_action(self,data:dict):
-        actions = [
+    def list_option(self,options_dict:dict[str:Option]):
+        output = [
+            colored("The possible options that you can modify in :\n","light_cyan"),
+        ]
+        
+        for component_name,option_list in options_dict.items():
+            #print(type(component_name))
+            output.append(" - Component \""+component_name+"\" :")
+            for option in option_list:
+                output.append(colored("   "+option.key, "cyan")+":"+colored(" "+str(option.value), "cyan"))
+            output.append(" ")
+                
+        output.append(colored("you can modify these parameters when installing a component with","light_grey")+
+                        colored(" --install-option 'component1-ip=10.0.0.1' 'component2-ip=10.0.0.2' ","cyan")+
+                        colored("\nor when config with ","light_grey")+
+                        colored("--config-option 'component1-ip=10.0.0.1' ","cyan"))    
+                                
+        for line in output:
+            print(line)
+            
+    def list_action(self,actions:list[Action]):
+        output = [
             colored("The possible actions you can do are :\n","light_cyan"),
         ]
         
-        for key,value in data.items():
-            actions.append(" - "+key+" :")
-            actions.append(colored("   "+value['command_description'], "cyan"),)
-            actions.append(colored("   "+value['description'].replace(r'\n','\n  ')+"\n","light_grey"))
+        for action in actions:
+            output.append(" - "+action.name+" :")
+            output.append(colored("   "+action.command_description, "cyan"),)
+            output.append(colored("   "+action.description.replace(r'\n','\n  ')+"\n","light_grey"))
             
-        for line in actions:
+        for line in output:
             print(line)
 
     # Easter Egg

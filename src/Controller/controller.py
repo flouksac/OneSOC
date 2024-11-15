@@ -28,14 +28,12 @@ class Controller:
         group_list.add_argument('-lA','--list-action', action='store_true',
                             help="List all possible action")
 
-        group_list.add_argument('-lO','--list-option', action='store_true',
+        group_list.add_argument('-lO','--list-option',nargs='*', metavar='\"COMPONENT\"',type=str.lower, #action='store_true',
                             help="List all option for each action")
 
         group_list.add_argument('-lC','--list-component', action='store_true',
                             help="List all components that can be installed")
 
-        group_list.add_argument('--list-install-option', nargs='*', metavar='\"COMPONENT\"',
-                            help="List all option of the given component to install")
 
 
         # Actions "read only"
@@ -65,24 +63,22 @@ class Controller:
     def parse_action(self):
         
         if self.args.list_action:    
-            #self.view.list_action()
-            pass
+            self.view.list_action(self.model.get_all_actions())
+            
 
-        elif self.args.list_option:
-            #self.view.list_option(get_options())
-            print("Liste des options disponibles pour les actions : [...]")
-
-        elif self.args.list_install_option is not None:
-            if len(self.args.list_install_option) == 0:
-                print("Options d'installation générales pour tous les composants : [...]")
-
-            else:
-                print(f"Options d'installation pour les composants {', '.join(self.args.list_install_option)} : [...]")
-
+        elif self.args.list_option is not None:
+            if len(self.args.list_option) == 0:
+                self.view.list_option(self.model.get_all_options())
+            else :
+                components = self.model.get_options_of_components(self.args.list_option)
+                if len(components) != len(self.args.list_option):
+                    self.view.display("Wrong components name provided",level=0,context="Fatal")
+                    exit(1)
+                else :
+                    self.view.list_option(components)
+                    
         elif self.args.list_component:
             self.view.list_component(self.model.get_all_components())
-            print("Liste des composants installables : [...]")
-
 
 
         elif any([self.args.info, self.args.healthcheck, self.args.install, self.args.config, self.args.repair]):
@@ -132,7 +128,11 @@ class Controller:
 
 
         self.view.display("Chargement des configurations et des informations de la machine...", level=3 ,context="Info")
-        self.model.init(self.args.config_path)
+        try:
+            self.model.init(self.args.config_path)
+        except Exception as e:
+            self.view.display("Wrong Configuration File, is the path correct ?\n"+str(e),level=0,context="Fatal")
+            exit(1)
         self.view.display("Informations récupérées avec succès !\n", level=3,context="Success")
         '''
         self.view.display("Information of this device : \n",level=3,color="light_cyan")
