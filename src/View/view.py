@@ -1,6 +1,7 @@
 from termcolor import colored
 from Utils.os_info import get_os_type
 import os,re
+from Model.component import Component 
 
 if get_os_type()=="Windows" : os.system("color")
 
@@ -133,6 +134,25 @@ class View:
 
             for message in recommendation_message:
                 print(message)
+
+   
+    def list_component(self,data:list[Component]):
+        output = []
+        
+        for component in data:
+            output.append(component.name+" : ")
+            output.append("  Description : ")
+            
+            output.append("    "+component.description.replace(r'\n','\n   '))
+            
+            output.append("  Options : ")
+            for option in component.options : 
+                output.append("    "+str(option))
+            #for platform in component.supported_platform : 
+            #    output.append("   "+platform)
+            output.append(" ")
+        for line in output:
+            print (line)
 
     def list_action(self,data:dict):
         actions = [

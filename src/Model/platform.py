@@ -6,11 +6,10 @@ from Utils.hardware_info import get_ram_in_gb, get_free_disk_space_gb , get_cpu_
 
 
 class Platform:
-    def __init__(self):
-        self.data = {'os':{}, 'is_admin':False, 'hardware':{}} # services ? docker ? ou bien dans une autre classe
-        #self.retrieve_os()
-        #self.retrieve_is_admin()
-        #self.retrieve_hardware()
+    def __init__(self,host=True,os={},need_admin=True,hardware={}):
+        pass
+        #self.data = {'os':os, 'is_admin':need_admin, 'hardware':hardware} # services ? docker ? ou bien dans une autre classe
+       
 
 
     def retrieve_os(self):

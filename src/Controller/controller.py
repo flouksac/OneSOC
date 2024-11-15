@@ -1,23 +1,20 @@
 import argparse
-from Model.load_yaml import YamlLoader
-from Model.platform import Platform
-from Model.Action.action import get_actions
-#from Model.Component.component import get_options
-
 from termcolor import colored
+
 from View.view import View
+from Model.model import Model
 
 class Controller:
     def __init__(self):
         self.view = View()
-        self.model = {}
+        self.model = Model()
         self.args = None
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser(prog="OneSOC",description="OneSOC deployment script",add_help=False)
         
         group_positional_arguments = parser.add_argument_group(colored("Positional arguments","cyan"))
-        group_positional_arguments.add_argument('config_path', type=str, default="../config.yaml", nargs='?' ,
+        group_positional_arguments.add_argument('config_path', type=str, default="./config.yaml", nargs='?' ,
                             help="configuration file path (default: %(default)s)")
 
         group_options = parser.add_argument_group(colored("Options","cyan"))
@@ -68,8 +65,8 @@ class Controller:
     def parse_action(self):
         
         if self.args.list_action:    
-            self.view.list_action(get_actions())
-
+            #self.view.list_action()
+            pass
 
         elif self.args.list_option:
             #self.view.list_option(get_options())
@@ -83,6 +80,7 @@ class Controller:
                 print(f"Options d'installation pour les composants {', '.join(self.args.list_install_option)} : [...]")
 
         elif self.args.list_component:
+            self.view.list_component(self.model.get_all_components())
             print("Liste des composants installables : [...]")
 
 
@@ -116,25 +114,8 @@ class Controller:
                 else:
                     print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
         
+
         
-    def load_model(self, config_path):
-        try :
-            self.model["Platform"] = Platform()
-            self.model["Configuration"] = YamlLoader(config_path)
-
-            self.model["Action"] = None
-            self.model["Options"] = None
-            self.model["Components"] = None
-
-        except Exception as e:
-            self.view.display(str(e),0,"fatal")
-            exit(1)
-
-
-
-
-
-
 
     def run(self):
         self.parse_arguments()
@@ -151,17 +132,18 @@ class Controller:
 
 
         self.view.display("Chargement des configurations et des informations de la machine...", level=3 ,context="Info")
-        self.load_model(self.args.config_path)
+        self.model.init(self.args.config_path)
         self.view.display("Informations récupérées avec succès !\n", level=3,context="Success")
-
+        '''
         self.view.display("Information of this device : \n",level=3,color="light_cyan")
         self.view.display_pretty_dict(self.model["Platform"].data, level=3)
 
 
-        self.view.display(f"Contenu de la configuration : ", level=5)
-        self.view.display_pretty_dict(self.model["Configuration"].data, level=5)
+        self.view.display(f"Contenu de la configuration : ", level=4)
+        self.view.display_pretty_dict(self.model["Configuration"].data, level=4)
 
-        self.view.display(f"\nContenu de la platform : ", level=5)
-        self.view.display_pretty_dict(self.model["Platform"].data, level=5)
-
+        self.view.display(f"\nContenu de la platform : ", level=4)
+        self.view.display_pretty_dict(self.model["Platform"].data, level=4)
+        '''
         self.parse_action()
+        
