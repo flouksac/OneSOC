@@ -25,8 +25,35 @@ class Component:
                 actions.append(Action(key,all_existing_actions[key]))  
         return actions
     
-    def load_supported_platform(self,values:dict):
+    def load_supported_platform(self, values: dict):
+        
         platforms = []
-        for _ in values["platform"].keys():
-            platforms.append(Platform(False,values["platform"]))
+
+        recommended_os = values["platform"].get("recommended_os", {})
+        
+        for os_type, distros in recommended_os.items():
+            if distros in ("None", None):
+                continue  
+            
+            for distro, distro_data in distros.items():
+                package = distro_data.get("package")
+                
+                for version_info, arch_data in distro_data.items():
+                    if "version" not in version_info:
+                        continue  
+                    
+                    architectures = arch_data.get("architecture", [])
+                    if architectures in ("None",None):  
+                        architectures = ['None']
+                    
+                    for architecture in architectures:
+                        platform_data = values["platform"] | { # | for concatenation of two dictionnaries
+                            "os_type": os_type,
+                            "recommended_os": distro,
+                            "version": version_info,
+                            "package": package,
+                            "architecture": architecture,
+                        }
+                        platforms.append(Platform(platform_data, host=False))
+        
         return platforms

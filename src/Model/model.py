@@ -41,6 +41,8 @@ class Model:
                 #if not any(current_option.key== known_option.key for known_option in options):
                 options[component.name].append(current_option)
         return options
+    
+    
 
     def get_host(self) -> Platform:
         if self.host_platform() is not None:

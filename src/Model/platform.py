@@ -6,13 +6,35 @@ from Utils.hardware_info import get_ram_in_gb, get_free_disk_space_gb , get_cpu_
 
 
 class Platform:
-    def __init__(self,host=True,values:dict={}):
-        self.data = {'os':os, 'is_admin':{}, 'hardware':{}} # services ? docker ? ou bien dans une autre classe
-        if host:
-            self.retrieve_os()
-            self.retrieve_is_admin()
-            self.retrieve_hardware()
-
+    def __init__(self,values:dict,host=False):
+        
+        self.minimum_ram = None
+        self.minimum_cpu_core = None
+        self.minimum_free_space = None
+        
+        self.recommended_ram = None
+        self.recommended_free_space = None
+        self.recommended_cpu_core = None
+        
+        self.os_type = None
+        self.recommended_os = None
+        self.package = None
+        self.version = None
+        self.architecture = None
+        
+        self.admin_rights_needed = None
+    
+        self.host = host    
+        self.load_platform(values)
+    
+    def load_platform(self,values:dict):
+        for key, value in values.items():
+            if hasattr(self, key):  # Vérifie si l'attribut existe
+                setattr(self, key, value)
+            else:
+                print(f"Clé inconnue ignorée : {key}")
+            
+            
 
     def retrieve_os(self):
         self.data['os']['os_name'] = get_os()

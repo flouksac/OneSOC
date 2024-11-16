@@ -47,18 +47,46 @@ Components:
       recommended_free_space: 250 #Gb
       recommended_cpu_core: 8
       recommended_os:
-        - Ubuntu 16.04
-        - Ubuntu 18.04
-        - Ubuntu 20.04
-        - Ubuntu 22.04
-        - Ubuntu 24.04
-        - CentOS 7
-        - CentOS 8
-        - Amazon Linux 2
-        - Amazon Linux 2023
-        - Red Hat Enterprise Linux 7
-        - Red Hat Enterprise Linux 8
-        - Red Hat Enterprise Linux 9
+        Linux:
+          Amazon Linux:
+            package: rpm
+            version 2: 
+              architecture: None
+            version 2023: 
+              architecture: None
+            
+          Ubuntu:
+            package: deb
+            version 16.04: 
+              architecture: None
+            version 18.04: 
+              architecture: None
+            version 20.04: 
+              architecture: None
+            version 22.04: 
+              architecture: None
+            version 24.04: 
+              architecture: None       
+          
+          CentOS:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+
+          Red Hat Enterprise Linux:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+            version 9: 
+              architecture: None               
+
+        Windows: None
+        MacOs: None
+
     
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
       wazuh-indexer-ip: "127.0.0.1" # <- change this
@@ -89,18 +117,45 @@ Components:
       recommended_free_space: 30 #Gb
       recommended_cpu_core: 8
       recommended_os:
-        - Ubuntu 16.04
-        - Ubuntu 18.04
-        - Ubuntu 20.04
-        - Ubuntu 22.04
-        - Ubuntu 24.04
-        - CentOS 7
-        - CentOS 8
-        - Amazon Linux 2
-        - Amazon Linux 2023
-        - Red Hat Enterprise Linux 7
-        - Red Hat Enterprise Linux 8
-        - Red Hat Enterprise Linux 9
+        Linux:
+          Amazon Linux:
+            package: rpm
+            version 2: 
+              architecture: None
+            version 2023: 
+              architecture: None
+            
+          Ubuntu:
+            package: deb
+            version 16.04: 
+              architecture: None
+            version 18.04: 
+              architecture: None
+            version 20.04: 
+              architecture: None
+            version 22.04: 
+              architecture: None
+            version 24.04: 
+              architecture: None       
+          
+          CentOS:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+
+          Red Hat Enterprise Linux:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+            version 9: 
+              architecture: None               
+
+        Windows: None
+        MacOs: None
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
       wazuh-server-ip: "127.0.0.1" # <- change this
@@ -131,18 +186,46 @@ Components:
       recommended_free_space: 30 #Gb
       recommended_cpu_core: 4
       recommended_os:
-        - Ubuntu 16.04
-        - Ubuntu 18.04
-        - Ubuntu 20.04
-        - Ubuntu 22.04
-        - Ubuntu 24.04
-        - CentOS 7
-        - CentOS 8
-        - Amazon Linux 2
-        - Amazon Linux 2023
-        - Red Hat Enterprise Linux 7
-        - Red Hat Enterprise Linux 8
-        - Red Hat Enterprise Linux 9
+        Linux:
+          Amazon Linux:
+            package: rpm
+            version 2: 
+              architecture: None
+            version 2023: 
+              architecture: None
+            
+          Ubuntu:
+            package: deb
+            version 16.04: 
+              architecture: None
+            version 18.04: 
+              architecture: None
+            version 20.04: 
+              architecture: None
+            version 22.04: 
+              architecture: None
+            version 24.04: 
+              architecture: None       
+          
+          CentOS:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+
+          Red Hat Enterprise Linux:
+            package: rpm
+            version 7: 
+              architecture: None    
+            version 8: 
+              architecture: None   
+            version 9: 
+              architecture: None               
+
+        Windows: None
+        MacOs: None
+
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
       wazuh-dashboard-ip: "127.0.0.1" # <- change this
@@ -296,11 +379,34 @@ Components:
       recommended_free_space: 200 #Gb
       recommended_cpu_core: 8
       recommended_os:
-        - Debian
-        - Fedora
-        - CentOS
-        - Red Hat Enterprise Linux
-        - Ubuntu
+        Linux:
+          Fedora:
+            package: rpm
+            version X: 
+              architecture: None
+
+          Ubuntu:
+            package: deb
+            version X: 
+              architecture: None
+          
+          CentOS:
+            package: rpm
+            version X: 
+              architecture: None    
+
+          Red Hat Enterprise Linux:
+            package: rpm
+            version X: 
+              architecture: None    
+
+          Debian:
+            package: deb
+            version X: 
+              architecture: None               
+
+        Windows: None
+        MacOs: None
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
       selks-ip: "127.0.0.1" # <- change this

@@ -147,6 +147,14 @@ class View:
             output.append(" - "+component.name+" : ")
             output.append(colored("   "+component.role,"cyan"))
             output.append(colored("   "+component.description.replace(r'\n','\n  '),"light_grey"))
+            
+            for platform in component.supported_platform:
+                
+
+                output.append(colored("   "+str(platform.os_type)+" - "+str(platform.recommended_os)+" - "+str(platform.package)+" - "+str(platform.recommended_os)+" - "+str(platform.package)+" - "+str(platform.version)+" - "+str(platform.architecture),"light_grey"))
+
+
+            
         for line in output:
             print (line)
 
