@@ -1,8 +1,8 @@
-from Model.load_yaml import YamlLoader
-from Model.component import Component
-from Model.platform import Platform
-from Model.option import Option
-from Model.action import Action
+from Model.loaderYAML import YamlLoader
+from Model.ModelObjects.component import Component
+from Model.ModelObjects.platform import Platform
+from Model.ModelObjects.option import Option
+from Model.ModelObjects.action import Action
 
 class Model:
     def __init__(self):

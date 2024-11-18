@@ -1,9 +1,9 @@
 from termcolor import colored
 from Utils.os_info import get_os_type
-import os,re
-from Model.component import Component 
-from Model.action import Action 
-from Model.option import Option
+import os
+from Model.ModelObjects.component import Component
+from Model.ModelObjects.action import Action
+from Model.ModelObjects.option import Option
 
 if get_os_type()=="Windows" : os.system("color")
 

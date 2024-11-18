@@ -1,8 +1,8 @@
 import argparse
 from termcolor import colored
 
-from View.view import View
-from Model.model import Model
+from View.main_view import View
+from Model.main_model import Model
 
 class Controller:
     def __init__(self):
@@ -12,7 +12,7 @@ class Controller:
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser(prog="OneSOC",description="OneSOC deployment script",add_help=False)
-        
+
         group_positional_arguments = parser.add_argument_group(colored("Positional arguments","cyan"))
         group_positional_arguments.add_argument('config_path', type=str, default="./config.yaml", nargs='?' ,
                             help="configuration file path (default: %(default)s)")
@@ -61,10 +61,10 @@ class Controller:
 
 
     def parse_action(self):
-        
-        if self.args.list_action:    
+
+        if self.args.list_action:
             self.view.list_action(self.model.get_all_actions())
-            
+
 
         if self.args.list_option is not None:
             if len(self.args.list_option) == 0:
@@ -76,7 +76,7 @@ class Controller:
                     exit(1)
                 else :
                     self.view.list_option(components)
-                    
+
         if self.args.list_component:
             self.view.list_component(self.model.get_all_components())
 
@@ -109,9 +109,20 @@ class Controller:
                     print("Réparation de tous les composants défectueux : [...]")
                 else:
                     print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
-        
 
-        
+        else :
+            self.ask_manually()
+
+    def ask_manually(self):
+        self.view.display("As no arguments has been passed, here is the manual menu :",level=0,color="light_cyan")
+        # Help
+        # component <-'\
+        # action    <__/
+        # param
+
+
+
+        pass
 
     def run(self):
         self.parse_arguments()
@@ -146,4 +157,5 @@ class Controller:
         self.view.display_pretty_dict(self.model["Platform"].data, level=4)
         '''
         self.parse_action()
-        
+
+

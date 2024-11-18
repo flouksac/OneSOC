@@ -1,6 +1,6 @@
-from Model.option import Option
-from Model.action import Action
-from Model.platform import Platform
+from Model.ModelObjects.option import Option
+from Model.ModelObjects.action import Action
+from Model.ModelObjects.platform import Platform
 
 class Component:
     def __init__(self,name:str,values:dict,all_existing_actions:dict):
