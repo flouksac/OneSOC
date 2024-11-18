@@ -66,7 +66,7 @@ class Controller:
             self.view.list_action(self.model.get_all_actions())
             
 
-        elif self.args.list_option is not None:
+        if self.args.list_option is not None:
             if len(self.args.list_option) == 0:
                 self.view.list_option(self.model.get_all_options())
             else :
@@ -77,7 +77,7 @@ class Controller:
                 else :
                     self.view.list_option(components)
                     
-        elif self.args.list_component:
+        if self.args.list_component:
             self.view.list_component(self.model.get_all_components())
 
 

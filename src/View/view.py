@@ -147,13 +147,15 @@ class View:
             output.append(" - "+component.name+" : ")
             output.append(colored("   "+component.role,"cyan"))
             output.append(colored("   "+component.description.replace(r'\n','\n  '),"light_grey"))
-            
+            output.append(colored("   Supported OS are : ","light_grey"))
+
             for platform in component.supported_platform:
                 
-
-                output.append(colored("   "+str(platform.os_type)+" - "+str(platform.recommended_os)+" - "+str(platform.package)+" - "+str(platform.recommended_os)+" - "+str(platform.package)+" - "+str(platform.version)+" - "+str(platform.architecture),"light_grey"))
-
-
+                if platform.architecture=="None":
+                    output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package),"light_grey"))
+                else :
+                    output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package)+" - "+str(platform.architecture),"light_grey"))
+            output.append(" ")
             
         for line in output:
             print (line)
@@ -173,7 +175,7 @@ class View:
         output.append(colored("you can modify these parameters when installing a component with","light_grey")+
                         colored(" --install-option 'component1-ip=10.0.0.1' 'component2-ip=10.0.0.2' ","cyan")+
                         colored("\nor when config with ","light_grey")+
-                        colored("--config-option 'component1-ip=10.0.0.1' ","cyan"))    
+                        colored("--config-option 'component1-ip=10.0.0.1' \n","cyan"))
                                 
         for line in output:
             print(line)

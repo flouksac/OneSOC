@@ -349,7 +349,45 @@ Components:
                 - aarch64
                 - armhf
         Windows:
+          Windows:
+            package: None
+            version XP and later:
+              architecture:
+                - 32/64bits
         MacOs:
+          MacOs:
+            package: None
+            version intel:
+              architecture:
+                - intel64
+            version silicon:
+              architecture:
+                - arm64
+        Solaris:
+          Solaris:
+            package: None
+            version 10:
+              architecture:
+                - i386
+                - SPARC
+            version 11:
+              architecture:
+                - i386
+                - SPARC
+
+        Aix:
+          Aix:
+            package: rpm
+            version 6.1 and later:
+              architecture:
+                - PowerPC
+
+        HP-UX:
+          HP-UX:
+            package: None
+            version 11.31:
+              architecture:
+                - Itanium
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
       wazuh-agent-ip: "127.0.0.1" # <- change this
