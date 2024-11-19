@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
 
+from Controller.host_controller import HostController
+from Model.main_model import Model
+from View.main_view import View
 
 class AbstractComponentController(ABC):
-    def __init__(self):
+    def __init__(self,options:list,model:Model,view:View):
+        self.host = HostController().get_host()
+        self.model = model
+        self.view = view
+        self.component = None
+
+    def parse_option(self):
         pass
 
     @abstractmethod

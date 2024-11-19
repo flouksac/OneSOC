@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 
 from Controller.abstract_component_controller import AbstractComponentController
+from Model.main_model import Model
+from View.main_view import View
 
 
 class AbstractComponentDockerController(AbstractComponentController,ABC):
-    def __init__(self):
-        super().__init__()
-        pass
+    def __init__(self,options:list,model:Model,view:View):
+        super().__init__(options,model,view)
+
 
     @abstractmethod
     def info(self):

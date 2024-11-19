@@ -1,4 +1,7 @@
 import argparse
+import importlib
+import os
+
 from termcolor import colored
 
 from View.main_view import View
@@ -62,6 +65,8 @@ class Controller:
 
     def parse_action(self):
 
+
+        # controlleur list, pcq j'aime bien:
         if self.args.list_action:
             self.view.list_action(self.model.get_all_actions())
 
@@ -81,9 +86,12 @@ class Controller:
             self.view.list_component(self.model.get_all_components())
 
 
+
+        # appel de controlleur dynamique pour ci dessous:
         elif any([self.args.info, self.args.healthcheck, self.args.install, self.args.config, self.args.repair]):
             if self.args.info is not None:
                 if len(self.args.info) == 0:
+
                     print("Informations pour tous les composants installés : [...]")
                 else:
                     print(f"Informations pour les composants {', '.join(self.args.info)} : [...]")
@@ -98,8 +106,10 @@ class Controller:
                 if not self.args.install:
                     print("Erreur : Aucun composant spécifié pour l'installation.")
                 else:
-                    print(
-                        f"Installation des composants {', '.join(self.args.install)} avec les options {self.args.install_option}")
+
+                    for i in range(len(self.args.install)):
+                        controller_instance = self.get_controller(self.args.install[i]) (self.args.install_option,self.model,self.view)
+                        controller_instance.install()
 
             if self.args.config:
                 print(f"Mise à jour de la configuration pour le composant {self.args.config}.")
@@ -116,13 +126,33 @@ class Controller:
     def ask_manually(self):
         self.view.display("As no arguments has been passed, here is the manual menu :",level=0,color="light_cyan")
         # Help
-        # component <-'\
-        # action    <__/
+        # action
+        # component
         # param
 
-
-
         pass
+
+    def get_controller(self,string_user):  # -> renvoie dynamiquement la bonne class controller après l'avoir importé
+        controller = None
+        string_controller = (string_user.replace("-","_").lower() + "_controller")  # -> wazuh-indexer, Wazuh_Indexer_Controller
+
+        possible_paths = [
+            "Controller.ControllerService." + string_controller,
+            "Controller.ControllerDocker." + string_controller
+        ]
+
+        for module_path in possible_paths:
+            try:
+                module = importlib.import_module(module_path)
+                controller = getattr(module, string_controller.title())
+                return controller
+
+            except (ModuleNotFoundError, AttributeError) as e:
+                continue
+
+        self.view.display("Wrong Component name :"+string_user,level=0,context="Fatal")
+        exit(1)
+
 
     def run(self):
         self.parse_arguments()
