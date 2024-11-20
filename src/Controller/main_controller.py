@@ -124,8 +124,29 @@ class Controller:
 
     def ask_manually(self):
         self.view.display("As no arguments has been passed, here is the manual menu :",level=0,color="light_cyan")
-        # Help
-        # action
+
+        # help
+        allowed_actions = [action.name for action in self.model.get_all_actions()]
+
+        chosen_actions = set()
+        while len(chosen_actions) == 0:
+            chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ",allowed_actions)
+
+        print([allowed_actions[index] for index in chosen_actions])
+
+
+        # for action in chose_actions ...
+            # remplacer ça par la liste des composants qui peuvent etre installer sur la machine
+            allowed_components = [component.name for component in self.model.get_all_components()]
+
+            chosen_components = set()
+            while len(chosen_components) == 0:
+                chosen_components = self.view.display_selector_multiple("Which component do you want to do ? ",allowed_components)
+
+            print([allowed_components[index] for index in chosen_components])
+            # for component in components :
+                # option 1, 2,3...
+
         # component
         # param
 

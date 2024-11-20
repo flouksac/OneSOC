@@ -1,6 +1,10 @@
-from termcolor import colored
-from Utils.os_info import get_os_type
 import os
+
+from termcolor import colored
+import survey as sv
+
+from Utils.os_info import get_os_type
+
 from Model.ModelObjects.component import Component
 from Model.ModelObjects.action import Action
 from Model.ModelObjects.option import Option
@@ -192,6 +196,10 @@ class View:
             
         for line in output:
             print(line)
+
+    def display_selector_multiple(self,prompt:str,choices:list[str]):
+        indexes = sv.routines.basket(prompt,options=choices, permit = True,escapable = False,positive_mark='['+colored("X","cyan")+']')
+        return indexes
 
     # Easter Egg
     def display_themis_the_cat(self):
