@@ -1,5 +1,7 @@
 import platform
 
+# /!\ standardiser par rapport au yaml dans platform
+
 def get_os_type():
     os_type = platform.system().lower()
     if os_type == "windows":

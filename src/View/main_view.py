@@ -9,7 +9,7 @@ if get_os_type()=="Windows" : os.system("color")
 
 class View:
     def __init__(self, verbosity = 2) -> None:
-        # verbosity : 
+        # verbosity :
         # 0 -> fundamental
         # 1 -> important
         # 2 -> normal
@@ -20,7 +20,7 @@ class View:
     def set_verbosity(self, level):
         self.verbosity = level
 
-    def display(self,message:str,level:int, context:str="", color:str=None) :
+    def display(self,message:str,level:int=2, context:str="", color:str=None) :
         """print message depending of the verbosity of the programme and the message level info
 
         Args:
@@ -151,7 +151,7 @@ class View:
 
             for platform in component.supported_platform:
                 
-                if platform.architecture=="None":
+                if platform.architecture=="None": # pas propre (regrouper par architecure)
                     output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package),"light_grey"))
                 else :
                     output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package)+" - "+str(platform.architecture),"light_grey"))
@@ -201,3 +201,4 @@ class View:
                             "           `-    \`_`\"'-\n",
                             'yellow')+"\n")
         return ""
+

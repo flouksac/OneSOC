@@ -1,6 +1,5 @@
 import argparse
 import importlib
-import os
 
 from termcolor import colored
 
@@ -120,7 +119,7 @@ class Controller:
                 else:
                     print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
 
-        else :
+        else : # modifier configuration
             self.ask_manually()
 
     def ask_manually(self):

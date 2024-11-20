@@ -6,10 +6,8 @@ from Model.ModelObjects.action import Action
 
 class Model:
     def __init__(self):
-        
-        #self.host_platform = Platform()
-        self.components = None 
-        
+        self.components:list[Component] = []
+
     def get_all_actions(self) -> list[Action]:
         actions = [] 
         for component in self.components:
@@ -26,8 +24,6 @@ class Model:
         for component in self.components:
             options[component.name] = []
             for current_option in component.options:
-                #if not any(current_option.key== known_option.key for known_option in options):
-                
                 options[component.name].append(current_option)
         return options
     
@@ -38,18 +34,8 @@ class Model:
                 continue
             options[component.name] = []
             for current_option in component.options:
-                #if not any(current_option.key== known_option.key for known_option in options):
                 options[component.name].append(current_option)
         return options
-    
-    
-
-    def get_host(self) -> Platform:
-        if self.host_platform() is not None:
-            return self.host_platform
-        else:
-            raise ValueError("Host need to be analyzed first") 
-        
 
     def load_component(self,data:dict) -> list[Component]:
         components = []
