@@ -2,11 +2,11 @@
 
 # Configuration minimale de python
 $global:python_minimal=3.11
-$global:python_minimal_maj=$python_minimal.Split(".")[O]
-$global:python_minimal_min=$python_minimal.Split(".")[1]
+$global:python_minimal_maj="$python_minimal".Split(".")[0]
+$global:python_minimal_min="$python_minimal".Split(".")[1]
 
 # Configuration par défaut de python
-$python_default=3.12
+$global:python_default=3.12
 
 # Chemin de python
 $global:pythonPath = $null
@@ -41,11 +41,11 @@ function handle_advice {
 # Cas d'utilisation : Vérifier la présence, ou non, de python sur la machine
 # Retour : true ou false (succès ou échec)
 function check_python_installed {
-    if (-not (Get-Command python3 -ErrorAction SilentlyContinue)) {
-        Write-Output "Python n'est pas installé sur ce système."
+    if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
+        Write-Host "Python n'est pas installé sur ce système."
         return $false
     } else {
-        Write-Output "Python est installé sur ce système."
+        Write-Host "Python est installé sur ce système."
         return $true
     }
 }
@@ -54,29 +54,30 @@ function check_python_installed {
 # Retour : 0 ou 1 (supérieur ou égale à 3.10 ou inférieur à 3.11)
 function check_python_version {
     # Get Python version
-    $version = & python3 --version 2>&1 | ForEach-Object { $_.Split(" ")[1] }
-    
+    $version = & py --version 2>&1 | ForEach-Object { "$_".Split(" ")[1] }
+   
     # Extract major and minor version
-    $majorVersion = $version.Split(".")[0]
-    $minorVersion = $version.Split(".")[1]
-    
+    $majorVersion = [int]("$version".Split(".")[0])
+    $minorVersion = [int]("$version".Split(".")[1])
+   
     # Check if version is >= 3.11
-    if ($majorVersion -gt 3 -or ($majorVersion -eq $python_minimal_maj -and $minorVersion -ge $python_minimal_min)) {
-        Write-Output "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
-        return $true
+    if ((($majorVersion -ge $python_minimal_maj) -and ($minorVersion -ge $python_minimal_min))) {
+    Write-Host "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
+    return $true
     } else {
-        Write-Output "La version de Python installée ($version) est inférieure à $python_minimal."
-        return $false
+    Write-Host "La version de Python installée ($version) est inférieure à $python_minimal."
+    return $false
     }
+
 }
 
 # Cas d'utilisation : Vérifier la présence de winget
 function check_winget_installed {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Output "Winget n'est pas installé."
+        Write-Host "Winget n'est pas installé."
         return $false
     } else {
-        Write-Output "Winget est installé sur ce système."
+        Write-Host "Winget est installé sur ce système."
         return $true
     }
 }
@@ -85,60 +86,49 @@ function check_winget_installed {
 # Paramètre : $useWinget (true pour installer via Winget, false pour installation via URL)
 # Retour : true ou false (succès ou échec)
 function install_python {
-    param (
-        [bool]$useWinget
-    )
-    
-    if ($useWinget) {
-        # Tentative d'installation via Winget
-        Write-Output "Installation de Python $python_default via Winget..."
-        winget install --id Python.Python.$python_minimal_maj --version $python_default -e
-        
-        if ($?) {
-            handle_success "Python $python_default installé avec succès via Winget."
-        } else {
-            handle_error "Problème lors de l'installation de Python $python_default via Winget."
-        }
-    } else {
         # Téléchargement et installation depuis le site officiel de Python
-        Write-Output "Installation de Python $python_default via téléchargement direct..."
-        $pythonInstallerUrl = "https://www.python.org/ftp/python/$python_default/python-$python_default-amd64.exe"
+        Write-Host "Installation de Python $python_default via téléchargement direct..."
+$pythonInstallerUrl="https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe"
         $tempInstallerPath = "$env:TEMP\python-installer.exe"
-        
+       
         # Télécharger le fichier d'installation
         try {
             Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $tempInstallerPath -ErrorAction Stop
-            Write-Output "Téléchargement de Python $python_default terminé."
+            Write-Host "Téléchargement de Python $python_default terminé."
         } catch {
             handle_error "Impossible de télécharger l'installateur Python."
         }
 
         # Exécuter l'installateur en mode silencieux
-        Write-Output "Installation de Python $python_default..."
-        Start-Process -FilePath $tempInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+        Write-Host "Installation de Python $python_default..."
+        START -FilePath $tempInstallerPath -ArgumentList "/passive InstallAllUsers=1 PrependPath=1 Include_pip=1" -Wait
 
         # Vérifier l'installation
-        if (Get-Command python -ErrorAction SilentlyContinue) {
+        if (py -3.12 --version) {
             Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
             handle_success "Python $python_default installé avec succès."
         } else {
-            Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
+            #Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
             handle_error "Problème lors de l'installation de Python $python_default."
         }
-    }
 }
 
 # Cas d'utilisation : Installer Python si nécessaire
 function ensure_python {
     # Vérifier si Python est installé et sa version
     $pythonInstalled = check_python_installed
-    $pythonVersionOk = check_python_version
-    if (-not $pythonInstalled -or -not $pythonVersionOk) {
-        Write-Output "Installation ou mise à jour de python..."
-        install_python -useWinget (check_winget_installed)
-        $global:pythonPath = (Get-Command python$python_default).Source
+    if(-not $pythonInstalled) {
+Write-Host "Installation de python $python_default..."
+        install_python
+        $global:pythonPath = (Get-Command py).Source
     } else {
-        $global:pythonPath = (Get-Command python3).Source
+$pythonVersionOk = check_python_version
+if(-not $pythonVersionOk) {
+Write-Host "Mise à jour de python vers python $python_default..."
+        install_python
+        $global:pythonPath = (Get-Command py).Source
+} else {
+$global:pythonPath = (Get-Command py).Source}
     }
 }
 
@@ -168,7 +158,7 @@ function install_requirements {
 
     # Installer les modules depuis requirements.txt
     Write-Host "Installation des modules depuis requirements.txt..."
-    
+   
     # Exécute la commande pip à partir de l'environnement virtuel
     ./venv/Scripts/python.exe -m pip install -r requirements.txt
 
@@ -200,7 +190,7 @@ function launch_main_py {
         handle_error "Problème lors du lancement de main.py (Code de sortie : $LASTEXITCODE)."
     }
 
-    Write-Output "main.py exécuté avec succès."
+    Write-Host "main.py exécuté avec succès."
 }
 
 
