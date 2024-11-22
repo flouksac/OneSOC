@@ -6,7 +6,7 @@ $global:python_minimal_maj="$python_minimal".Split(".")[0]
 $global:python_minimal_min="$python_minimal".Split(".")[1]
 
 # Configuration par défaut de python
-$python_default=3.12
+$global:python_default=3.12
 
 # Chemin de python
 $global:pythonPath = $null
@@ -55,11 +55,11 @@ function check_python_installed {
 function check_python_version {
     # Get Python version
     $version = & python3 --version 2>&1 | ForEach-Object { "$_".Split(" ")[1] }
-    
+   
     # Extract major and minor version
     $majorVersion = "$version".Split(".")[0]
     $minorVersion = "$version".Split(".")[1]
-    
+   
     # Check if version is >= 3.11
     if ($majorVersion -gt 3 -or ($majorVersion -eq $python_minimal_maj -and $minorVersion -ge $python_minimal_min)) {
         Write-Host "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
@@ -85,26 +85,11 @@ function check_winget_installed {
 # Paramètre : $useWinget (true pour installer via Winget, false pour installation via URL)
 # Retour : true ou false (succès ou échec)
 function install_python {
-    param (
-        [bool]$useWinget
-    )
-    
-    if ($useWinget) {
-        # Tentative d'installation via Winget
-        Write-Host "Installation de Python $python_default via Winget..."
-        winget install --id Python.Python.$python_minimal_maj --version $python_default -e
-        
-        if ($?) {
-            handle_success "Python $python_default installé avec succès via Winget."
-        } else {
-            handle_error "Problème lors de l'installation de Python $python_default via Winget."
-        }
-    } else {
         # Téléchargement et installation depuis le site officiel de Python
         Write-Host "Installation de Python $python_default via téléchargement direct..."
-        $pythonInstallerUrl = "https://www.python.org/ftp/python/$python_default/python-$python_default-amd64.exe"
+$pythonInstallerUrl="https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe"
         $tempInstallerPath = "$env:TEMP\python-installer.exe"
-        
+       
         # Télécharger le fichier d'installation
         try {
             Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $tempInstallerPath -ErrorAction Stop
@@ -115,17 +100,16 @@ function install_python {
 
         # Exécuter l'installateur en mode silencieux
         Write-Host "Installation de Python $python_default..."
-        Start-Process -FilePath $tempInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+        START -FilePath $tempInstallerPath -ArgumentList "/passive InstallAllUsers=1 PrependPath=1 Include_pip=1" -Wait
 
         # Vérifier l'installation
-        if (Get-Command python -ErrorAction SilentlyContinue) {
+        if (py -3.12 --version) {
             Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
             handle_success "Python $python_default installé avec succès."
         } else {
-            Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
+            #Remove-Item $tempInstallerPath -Force  # Nettoyer le fichier temporaire
             handle_error "Problème lors de l'installation de Python $python_default."
         }
-    }
 }
 
 # Cas d'utilisation : Installer Python si nécessaire
@@ -135,10 +119,10 @@ function ensure_python {
     $pythonVersionOk = check_python_version
     if (-not $pythonInstalled -or -not $pythonVersionOk) {
         Write-Host "Installation ou mise à jour de python..."
-        install_python -useWinget (check_winget_installed)
-        $global:pythonPath = (Get-Command python$python_default).Source
+        install_python
+        $global:pythonPath = (Get-Command py).Source
     } else {
-        $global:pythonPath = (Get-Command python3).Source
+        $global:pythonPath = (Get-Command py).Source
     }
 }
 
@@ -168,7 +152,7 @@ function install_requirements {
 
     # Installer les modules depuis requirements.txt
     Write-Host "Installation des modules depuis requirements.txt..."
-    
+   
     # Exécute la commande pip à partir de l'environnement virtuel
     ./venv/Scripts/python.exe -m pip install -r requirements.txt
 
@@ -194,7 +178,7 @@ function launch_main_py {
     }
 
     # Exécution de main.py
-    Write-Host "Exécution de main.py"
+    Write-Output "Exécution de main.py"
     & "./venv/Scripts/python.exe" "./main.py"
     if (-not $?) {
         handle_error "Problème lors du lancement de main.py (Code de sortie : $LASTEXITCODE)."
