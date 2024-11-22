@@ -42,10 +42,10 @@ function handle_advice {
 # Retour : true ou false (succès ou échec)
 function check_python_installed {
     if (-not (Get-Command python3 -ErrorAction SilentlyContinue)) {
-        Write-Output "Python n'est pas installé sur ce système."
+        Write-Host "Python n'est pas installé sur ce système."
         return $false
     } else {
-        Write-Output "Python est installé sur ce système."
+        Write-Host "Python est installé sur ce système."
         return $true
     }
 }
@@ -62,10 +62,10 @@ function check_python_version {
     
     # Check if version is >= 3.11
     if ($majorVersion -gt 3 -or ($majorVersion -eq $python_minimal_maj -and $minorVersion -ge $python_minimal_min)) {
-        Write-Output "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
+        Write-Host "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
         return $true
     } else {
-        Write-Output "La version de Python installée ($version) est inférieure à $python_minimal."
+        Write-Host "La version de Python installée ($version) est inférieure à $python_minimal."
         return $false
     }
 }
@@ -73,10 +73,10 @@ function check_python_version {
 # Cas d'utilisation : Vérifier la présence de winget
 function check_winget_installed {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Output "Winget n'est pas installé."
+        Write-Host "Winget n'est pas installé."
         return $false
     } else {
-        Write-Output "Winget est installé sur ce système."
+        Write-Host "Winget est installé sur ce système."
         return $true
     }
 }
@@ -91,7 +91,7 @@ function install_python {
     
     if ($useWinget) {
         # Tentative d'installation via Winget
-        Write-Output "Installation de Python $python_default via Winget..."
+        Write-Host "Installation de Python $python_default via Winget..."
         winget install --id Python.Python.$python_minimal_maj --version $python_default -e
         
         if ($?) {
@@ -101,20 +101,20 @@ function install_python {
         }
     } else {
         # Téléchargement et installation depuis le site officiel de Python
-        Write-Output "Installation de Python $python_default via téléchargement direct..."
+        Write-Host "Installation de Python $python_default via téléchargement direct..."
         $pythonInstallerUrl = "https://www.python.org/ftp/python/$python_default/python-$python_default-amd64.exe"
         $tempInstallerPath = "$env:TEMP\python-installer.exe"
         
         # Télécharger le fichier d'installation
         try {
             Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $tempInstallerPath -ErrorAction Stop
-            Write-Output "Téléchargement de Python $python_default terminé."
+            Write-Host "Téléchargement de Python $python_default terminé."
         } catch {
             handle_error "Impossible de télécharger l'installateur Python."
         }
 
         # Exécuter l'installateur en mode silencieux
-        Write-Output "Installation de Python $python_default..."
+        Write-Host "Installation de Python $python_default..."
         Start-Process -FilePath $tempInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
 
         # Vérifier l'installation
@@ -134,7 +134,7 @@ function ensure_python {
     $pythonInstalled = check_python_installed
     $pythonVersionOk = check_python_version
     if (-not $pythonInstalled -or -not $pythonVersionOk) {
-        Write-Output "Installation ou mise à jour de python..."
+        Write-Host "Installation ou mise à jour de python..."
         install_python -useWinget (check_winget_installed)
         $global:pythonPath = (Get-Command python$python_default).Source
     } else {
@@ -194,13 +194,13 @@ function launch_main_py {
     }
 
     # Exécution de main.py
-    Write-Output "Exécution de main.py"
+    Write-Host "Exécution de main.py"
     & "./venv/Scripts/python.exe" "./main.py"
     if (-not $?) {
         handle_error "Problème lors du lancement de main.py (Code de sortie : $LASTEXITCODE)."
     }
 
-    Write-Output "main.py exécuté avec succès."
+    Write-Host "main.py exécuté avec succès."
 }
 
 
