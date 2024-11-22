@@ -1,4 +1,8 @@
+import ctypes
+import os
 import platform
+import shutil
+
 
 # /!\ standardiser par rapport au yaml dans platform
 
@@ -37,4 +41,41 @@ def get_os():
         current_os = f"{os_name} {os_version}"
 
     return current_os
+
+def retrieve_is_admin():
+    os_type = get_os_type().lower()
+    is_admin = False
+    if 'windows' in os_type:
+        try:
+            is_admin = (ctypes.windll.shell32.IsUserAnAdmin() != 0)
+        except AttributeError:
+            is_admin = False
+
+    elif 'linux' in os_type or 'mac' in os_type:
+        is_admin = os.geteuid() == 0
+
+    else:
+        raise ValueError("OS not supported for admin rights privileges.")
+
+    return is_admin
+
+
+
+def retrieve_package():
+    os_type = get_os_type().lower()
+    match os_type:
+        case 'windows':
+            return None
+            pass
+        case 'linux':
+            package_managers = ["apt", "dnf", "yum"]
+            found_managers = [
+                manager for manager in package_managers if shutil.which(manager)
+            ]
+            if not found_managers:
+                raise ValueError("No known package manager detected on this os.")
+            return found_managers  # Retourne tous les gestionnaires trouvés
+                    # vérifier la présence de apt, dnf , yum
+        case _ :
+            raise ValueError("OS not supported for admin rights privileges.")
 

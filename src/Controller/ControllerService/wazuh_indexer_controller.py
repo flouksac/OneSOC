@@ -8,6 +8,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         super().__init__(options, model, view)
 
     def info(self):
+        print(self.host.os_type)
         # connaitre la version du support
         # parcourir les services en listant les installer
         # et version
@@ -22,7 +23,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
     def install(self):
         # self.host -> quel os,version,... ?
         # est ce que c'est compatible
-            # non -> fatal
+        # non -> fatal
         # bof -> on demande confirmation/on essaye
         # oui -> on essaye d'installer
 
@@ -45,7 +46,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         #
         # renvoi un résumé
 
-        self.view.display("ZAZA",level=0)
+        self.view.display("ZAZA", level=0)
 
         pass
 
@@ -63,5 +64,3 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         # healthcheck
         # ou exit
         pass
-
-
