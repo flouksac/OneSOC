@@ -2,8 +2,8 @@
 
 # Configuration minimale de python
 $global:python_minimal=3.11
-$global:python_minimal_maj=$python_minimal.Split(".")[O]
-$global:python_minimal_min=$python_minimal.Split(".")[1]
+$global:python_minimal_maj="$python_minimal".Split(".")[0]
+$global:python_minimal_min="$python_minimal".Split(".")[1]
 
 # Configuration par défaut de python
 $python_default=3.12
@@ -54,11 +54,11 @@ function check_python_installed {
 # Retour : 0 ou 1 (supérieur ou égale à 3.10 ou inférieur à 3.11)
 function check_python_version {
     # Get Python version
-    $version = & python3 --version 2>&1 | ForEach-Object { $_.Split(" ")[1] }
+    $version = & python3 --version 2>&1 | ForEach-Object { "$_".Split(" ")[1] }
     
     # Extract major and minor version
-    $majorVersion = $version.Split(".")[0]
-    $minorVersion = $version.Split(".")[1]
+    $majorVersion = "$version".Split(".")[0]
+    $minorVersion = "$version".Split(".")[1]
     
     # Check if version is >= 3.11
     if ($majorVersion -gt 3 -or ($majorVersion -eq $python_minimal_maj -and $minorVersion -ge $python_minimal_min)) {
