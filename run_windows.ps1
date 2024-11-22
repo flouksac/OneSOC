@@ -41,7 +41,7 @@ function handle_advice {
 # Cas d'utilisation : Vérifier la présence, ou non, de python sur la machine
 # Retour : true ou false (succès ou échec)
 function check_python_installed {
-    if (-not (Get-Command python3 -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
         Write-Host "Python n'est pas installé sur ce système."
         return $false
     } else {
@@ -54,20 +54,21 @@ function check_python_installed {
 # Retour : 0 ou 1 (supérieur ou égale à 3.10 ou inférieur à 3.11)
 function check_python_version {
     # Get Python version
-    $version = & python3 --version 2>&1 | ForEach-Object { "$_".Split(" ")[1] }
+    $version = & py --version 2>&1 | ForEach-Object { "$_".Split(" ")[1] }
    
     # Extract major and minor version
-    $majorVersion = "$version".Split(".")[0]
-    $minorVersion = "$version".Split(".")[1]
+    $majorVersion = [int]("$version".Split(".")[0])
+    $minorVersion = [int]("$version".Split(".")[1])
    
     # Check if version is >= 3.11
-    if ($majorVersion -gt 3 -or ($majorVersion -eq $python_minimal_maj -and $minorVersion -ge $python_minimal_min)) {
-        Write-Host "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
-        return $true
+    if ((($majorVersion -ge $python_minimal_maj) -and ($minorVersion -ge $python_minimal_min))) {
+    Write-Host "La version de Python installée est $version, elle est supérieure ou égale à $python_minimal."
+    return $true
     } else {
-        Write-Host "La version de Python installée ($version) est inférieure à $python_minimal."
-        return $false
+    Write-Host "La version de Python installée ($version) est inférieure à $python_minimal."
+    return $false
     }
+
 }
 
 # Cas d'utilisation : Vérifier la présence de winget
@@ -116,13 +117,18 @@ $pythonInstallerUrl="https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd6
 function ensure_python {
     # Vérifier si Python est installé et sa version
     $pythonInstalled = check_python_installed
-    $pythonVersionOk = check_python_version
-    if (-not $pythonInstalled -or -not $pythonVersionOk) {
-        Write-Host "Installation ou mise à jour de python..."
+    if(-not $pythonInstalled) {
+Write-Host "Installation de python $python_default..."
         install_python
         $global:pythonPath = (Get-Command py).Source
     } else {
+$pythonVersionOk = check_python_version
+if(-not $pythonVersionOk) {
+Write-Host "Mise à jour de python vers python $python_default..."
+        install_python
         $global:pythonPath = (Get-Command py).Source
+} else {
+$global:pythonPath = (Get-Command py).Source}
     }
 }
 
