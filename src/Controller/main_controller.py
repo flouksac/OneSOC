@@ -29,7 +29,6 @@ class Controller:
             exit(1)
 
 
-
         self.view.display("Chargement des configurations et des informations de la machine...", level=3, context="Info")
 
         try:
