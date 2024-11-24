@@ -21,14 +21,12 @@ class Controller:
         self.view.display_recommendation()
 
         self.view.display("Initialisation completed\n", level=4, context="Success")
-
-        # vérifier que la commande est exécuté avec des permis d'administration
-        if not self.host_controller.host.admin_rights_needed:
-            self.view.display("This script should be run with admin rights, run it again with sudo or as administrator",
-                              level=0, context="Fatal")
-            exit(1)
-
-
+        """
+                # vérifier que la commande est exécuté avec des permis d'administration
+                if not self.host_controller.host.admin_rights_needed:
+                    self.view.display("This script should be run with admin rights, run it again as admin/sudo", level=0, context="Fatal")
+                    exit(1)
+        """
         self.view.display("Chargement des configurations et des informations de la machine...", level=3, context="Info")
 
         try:
@@ -39,7 +37,10 @@ class Controller:
 
         self.view.display("Informations récupérées avec succès !\n", level=3, context="Success")
 
-        self.parser.parse()
+        self.parser.parse() # identify if the args or ask user manually to run actions on given components
+
+
+
 
 
         """

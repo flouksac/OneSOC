@@ -2,7 +2,7 @@ import argparse
 import importlib
 
 from termcolor import colored
-
+from Controller.list_controller import ListController
 
 class Parser:
     def __init__(self, view, model):
@@ -90,22 +90,18 @@ class Parser:
         return parser.parse_args()
 
     def parse_list(self):
+        list_controller = ListController(self.model,self.view)
+        
         if self.args.list_action:
-            self.view.list_action(self.model.get_all_actions())
-
-        if self.args.list_option is not None:
-            if len(self.args.list_option) == 0:
-                self.view.list_option(self.model.get_all_options())
-            else:
-                components = self.model.get_options_of_components(self.args.list_option)
-                if len(components) != len(self.args.list_option):
-                    self.view.display("Wrong components name provided", level=0, context="Fatal")
-                    exit(1)
-                else:
-                    self.view.list_option(components)
+            list_controller.get_actions()
 
         if self.args.list_component:
-            self.view.list_component(self.model.get_all_components())
+            list_controller.get_components()
+
+        if self.args.list_option is not None:
+            list_controller.get_options(self.args.list_option)
+  
+            
 
     def parse_action(self):
 
@@ -149,30 +145,53 @@ class Parser:
                 print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
 
     def parse_manually(self):
-        self.view.display("As no arguments has been passed, here is the manual menu :", level=0, color="light_cyan")
+        self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="light_cyan")
 
         # help
         allowed_actions = [action.name for action in self.model.get_all_actions()]
-
         chosen_actions = set()
         while len(chosen_actions) == 0:
             chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ", allowed_actions)
 
-        print([allowed_actions[index] for index in chosen_actions])
 
-        """
-        # for action in chose_actions ...
-            # remplacer ça par la liste des composants qui peuvent etre installer sur la machine
-            allowed_components = [component.name for component in self.model.get_all_components()]
+        for action in [action for index,action in enumerate(self.model.get_all_actions()) if index in chosen_actions ]:
 
+            allowed_components = [component.name for component in self.model.get_all_components()] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine 
             chosen_components = set()
             while len(chosen_components) == 0:
-                chosen_components = self.view.display_selector_multiple("Which component do you want to do ? ",allowed_components)
+                chosen_components = self.view.display_selector_multiple("With the action : " +colored(f"{action.name.upper()}","light_cyan")+"\n  select the component that you need : ",allowed_components)
 
-            print([allowed_components[index] for index in chosen_components])
-            # for component in components :
-                # option 1, 2,3...
-        """
+            for component in [component for index,component in enumerate(self.model.get_all_components()) if index in chosen_components ]:
+                
+                options = []
+                for option in component.options:
+                    if action.name.lower() in ["install","config"]:
+                        # on demande si le parammetre courant est gardé avec la valeur par default ou on le change 
+                    
+                        options.append(option.key)
+                        #print ("you will have to parameter this option : ",option.key)
+                
+                # are you sure you want to .... with ... ? ( yes ? ignore and pass to the next instruction ? exit the script ?)
+                # if pass
+                #    continue
+                # if abord ; exit()
+                # print running blablabla ...
+                # try :
+                #     self.get_controller(component.name)(options,model,view).action_name() <- avec action_name() qui doit etre appeler dynamiquement
+                #     print sucess ...
+                # except: 
+                #     print nanana error/fatal
+                
+                if options:               
+                    
+                    
+                    print(f"\n  Running : {action.name} on {component.name} with options : {options}")   
+                     
+                else : 
+                    print(f"\n  Running : {action.name} on {component.name}")
+            
+            print("")
+        
         # component
         # param
 
