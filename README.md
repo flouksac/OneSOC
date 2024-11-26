@@ -35,7 +35,7 @@ you need a cli access and admin privileges
    ````
    on windows (as admin):
    ```batch
-  Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://github/flouksac/oneSoc/install.ps1'))
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://github/flouksac/oneSoc/install.ps1'))
    ```
    
 3. Enjoy !
