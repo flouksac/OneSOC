@@ -31,6 +31,11 @@ you need a cli access and admin privileges
 
 1. Just run:
    ```bash
-   git clone https://github.com/flouksac/OneSoc.git && cd OneSoc && . ./run.sh
+   git clone https://github.com/flouksac/OneSoc.git && sudo ./OneSoc/install.sh
    ````
-2. Enjoy !
+   on windows (as admin):
+   ```batch
+  Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://github/flouksac/oneSoc/install.ps1'))
+   ```
+   
+3. Enjoy !
