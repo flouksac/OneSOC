@@ -135,7 +135,8 @@ create_venv() {
     fi
 
     "$python_path" -m venv venv
-    if [[ $? -eq 0 ]]; then
+
+    if [[ -d "venv" ]]; then
     handle_success "Création du VENV avec succès."
     else
         handle_error "Problème lors de la création du VENV"
