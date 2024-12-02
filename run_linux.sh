@@ -40,6 +40,18 @@ check_python_installed() {
     fi
 }
 
+# Cas d'utilisation : Vérifier si l'utilisateur possède les droits administrateurs
+# Retour : 0 ou 1 (succès ou échec)
+is_root() {
+    echo "Ce script doit etre execute en tant qu'administrateur (avec sudo)."
+    echo "Verification ..."
+    if [ "$EUID" -ne 0 ]; then
+        handle_error "Relancer en tant qu'administrateur"
+    else 
+        handle_succes "Le script est lancé en tant qu'administrateur"
+    fi
+}
+
 # Cas d'utilisation : Vérifier la version de python installée
 # Retour : 0 ou 1 (supérieur ou égale à 3.10 ou inférieur à 3.11)
 check_python_version() {
@@ -227,14 +239,26 @@ launch_main_py() {
     fi
 }
 
-# 1. S'assurer de la disponibilité de python
+# 1. S'assurer que le script est lancé en tant qu'administrateur
+is_root
+
+# 2. Mise à jours des paquets
+update_packages
+
+# 3. S'assurer de la disponibilité de python
 ensure_python
 
-# 2. Création du VENV
+# 4. Installation de pip
+install_pip
+
+# 5. Installation du module venv
+install_module_venv
+
+# 6. Création du VENV
 create_venv
 
-# 3. Installation des requirements
+# 7. Installation des requirements
 install_requirements
 
-# 4. Lancement du script main.py
+# 8. Lancement du script main.py
 #launch_main_py
