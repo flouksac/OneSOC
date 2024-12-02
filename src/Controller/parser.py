@@ -2,19 +2,20 @@ import argparse
 import importlib
 
 from termcolor import colored
+from Controller.host_controller import HostController
 from Controller.list_controller import ListController
+from View.main_view import View
+from Model.main_model import Model
 
 class Parser:
-    def __init__(self, view, model):
+    def __init__(self):
         self.args = self.parse_arguments()
-        self.view = view
-        self.model = model
+        self.view = View()
+        self.model = Model()
 
-    def get_verbosity(self):
-        return self.args.verbosity
+    def get_verbosity(self): return self.args.verbosity
 
-    def get_config_path(self):
-        return self.args.config_path
+    def get_config_path(self): return self.args.config_path
 
     def get_controller(self, string_user):  # -> renvoie dynamiquement la bonne class controller après l'avoir importé
         controller = None
@@ -42,7 +43,7 @@ class Parser:
         parser = argparse.ArgumentParser(prog="OneSOC", description="OneSOC deployment script", add_help=False)
 
         group_positional_arguments = parser.add_argument_group(colored("Positional arguments", "cyan"))
-        group_positional_arguments.add_argument('config_path', type=str, default="./config.yaml", nargs='?',
+        group_positional_arguments.add_argument('config_path', type=str, default="./../config.yaml", nargs='?',
                                                 help="configuration file path (default: %(default)s)")
 
         group_options = parser.add_argument_group(colored("Options", "cyan"))
@@ -90,7 +91,7 @@ class Parser:
         return parser.parse_args()
 
     def parse_list(self):
-        list_controller = ListController(self.model,self.view)
+        list_controller = ListController()
         
         if self.args.list_action:
             list_controller.get_actions()
@@ -147,29 +148,60 @@ class Parser:
     def parse_manually(self):
         self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="light_cyan")
 
+        temp_controller = HostController()
+        
         # help
         allowed_actions = [action.name for action in self.model.get_all_actions()]
         chosen_actions = set()
         while len(chosen_actions) == 0:
             chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ", allowed_actions)
-
+            print()
 
         for action in [action for index,action in enumerate(self.model.get_all_actions()) if index in chosen_actions ]:
 
-            allowed_components = [component.name for component in self.model.get_all_components()] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine 
+            all_components = [component for component in self.model.get_all_components_by_action(action)] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine 
+            
+            allowed_components = []
+            supported_platform = []
+            for component in all_components:
+                for platform in component.supported_platform : 
+                
+                    try :
+                        if temp_controller.is_fully_compatible(platform):
+                            # print(f"The component {component.name} is fully compatible with the current host platform")
+                            supported_platform.append(platform)
+                            allowed_components.append(component)
+                        elif temp_controller.is_minimum_compatible(platform):
+                            #print(f"platform seems to be compatible")
+                            supported_platform.append(platform)
+                            allowed_components.append(component)
+
+                    except Exception as e:
+                        pass
+                        # print(e) 
+            
+            allowed_components_names = [component.name for component in allowed_components ]
+            
             chosen_components = set()
             while len(chosen_components) == 0:
-                chosen_components = self.view.display_selector_multiple("With the action : " +colored(f"{action.name.upper()}","light_cyan")+"\n  select the component that you need : ",allowed_components)
+                chosen_components = self.view.display_selector_multiple("With the action : " +colored(f"{action.name.upper()}","light_cyan")+",\nSelect the component that you need : ",allowed_components_names)
 
-            for component in [component for index,component in enumerate(self.model.get_all_components()) if index in chosen_components ]:
+            for component in [component for index,component in enumerate(allowed_components) if index in chosen_components ]:
                 
-                options = []
-                for option in component.options:
-                    if action.name.lower() in ["install","config"]:
-                        # on demande si le parammetre courant est gardé avec la valeur par default ou on le change 
+                   
+                
+                
+                options = {}
+                if action.name.lower() in ["install","config"]:
+                    self.view.display_wait("\nConfiguring the "+colored(component.name,"light_cyan")+" component ")
                     
-                        options.append(option.key)
-                        #print ("you will have to parameter this option : ",option.key)
+                    for option in component.options:
+                    
+                        # on demande si le parammetre courant est gardé avec la valeur par default ou on le change 
+                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default: '{option.value}') : ") or option.value
+                        print(colored(value,"light_cyan"))
+                        options[option.key] = value
+                        #print ("you will have to parameter this option : ",option.key) -> prettydict dans view avec un choix pour etre sure
                 
                 # are you sure you want to .... with ... ? ( yes ? ignore and pass to the next instruction ? exit the script ?)
                 # if pass

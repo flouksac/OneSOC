@@ -12,6 +12,18 @@ class Component:
         self.actions: list[Action] = self.load_actions(values,all_existing_actions)
         self.supported_platform: list[Platform] = self.load_supported_platform(values)
  
+    def is_action_supported(self,given_action:str|Action):
+        if type(given_action) is str:
+            for action in self.actions:
+                if given_action.lower() in action.name.lower():
+                    return True
+            return False
+        elif type(given_action) is Action:
+            for action in self.actions:
+                if given_action.name == action.name:
+                    return True
+        return False
+ 
     def load_options(self,values:dict):
         options = []
         for key, value in values["options"].items():
@@ -54,6 +66,6 @@ class Component:
                             "package": package,
                             "architecture": architecture,
                         }
-                        platforms.append(Platform(platform_data, host=False))
+                        platforms.append(Platform(platform_data))
         
         return platforms

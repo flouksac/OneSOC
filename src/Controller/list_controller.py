@@ -1,9 +1,12 @@
 from Controller.host_controller import HostController
+from View.main_view import View
+from Model.main_model import Model
+
 
 class ListController:
-    def __init__(self,model,view) -> None:
-        self.model = model
-        self.view = view
+    def __init__(self) -> None:
+        self.model = Model()
+        self.view = View()
         self.host = HostController()
         
     def get_actions(self):

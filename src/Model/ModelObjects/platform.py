@@ -1,5 +1,5 @@
 class Platform:
-    def __init__(self,values:dict,host=False):
+    def __init__(self,values:dict):
         
         self.minimum_ram = None
         self.minimum_cpu_core = None
@@ -16,8 +16,7 @@ class Platform:
         self.architecture = None
         
         self.admin_rights_needed = None
-    
-        self.host = host    
+       
         self.load_platform(values)
     
     def load_platform(self,values:dict):

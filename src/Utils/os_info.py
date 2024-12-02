@@ -61,12 +61,12 @@ def retrieve_is_admin():
 
 
 
-def retrieve_package():
+def retrieve_package() -> None|list:
     os_type = get_os_type().lower()
     match os_type:
         case 'windows':
             return None
-            pass
+        
         case 'linux':
             package_managers = ["apt", "dnf", "yum"]
             found_managers = [
@@ -79,3 +79,13 @@ def retrieve_package():
         case _ :
             raise ValueError("OS not supported for admin rights privileges.")
 
+
+def get_cpu_architecture():
+    
+    os_type = get_os_type().lower()
+    match os_type:
+        case 'windows':
+            return platform.architecture()[0] 
+        case _ :
+            return platform.machine() 
+   

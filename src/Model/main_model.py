@@ -3,8 +3,13 @@ from Model.ModelObjects.component import Component
 from Model.ModelObjects.platform import Platform
 from Model.ModelObjects.option import Option
 from Model.ModelObjects.action import Action
+from DesignPattern.singleton import Singleton
 
-class Model:
+
+
+
+class Model(metaclass = Singleton):
+    
     def __init__(self):
         self.components:list[Component] = []
 
@@ -18,6 +23,14 @@ class Model:
 
     def get_all_components(self) -> list[Component]:
         return self.components
+    
+    def get_all_components_by_action(self,action:str) -> list[Component]:
+        output = []
+        for component in self.components:
+            if component.is_action_supported(action):
+                output.append(component)
+        return output
+                
     
     def get_all_options(self) -> dict[str:Option]: 
         options = {} 

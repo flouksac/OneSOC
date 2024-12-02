@@ -1,4 +1,5 @@
 import os
+import time
 
 from termcolor import colored
 import survey as sv
@@ -9,9 +10,13 @@ from Model.ModelObjects.component import Component
 from Model.ModelObjects.action import Action
 from Model.ModelObjects.option import Option
 
-if get_os_type()=="Windows" : os.system("color")
+from DesignPattern.singleton import Singleton
 
-class View:
+if get_os_type()=="Windows" : os.system("color") # permet de pouvoir afficher la couleur sous windows
+
+
+class View(metaclass=Singleton):
+    
     def __init__(self, verbosity = 2) -> None:
         # verbosity :
         # 0 -> fundamental
@@ -40,11 +45,11 @@ class View:
         
         if self.verbosity >= level:
 
-            context_mapping = {"fatal":   ("red",    "☠️ "),
-                               "error":   ("red",    "❌ "),
+            context_mapping = {"fatal":   ("red",         "☠️ "),
+                               "error":   ("red",         "❌ "),
                                "success": ("light_green",  "✅️"),
-                               "warning": ("yellow", "⚠️ "),
-                               "info":    ("light_grey", "💬")
+                               "warning": ("yellow",      "⚠️ "),
+                               "info":    ("light_grey",   "💬")
                                }
 
             # Assigne la couleur et le symbole basés sur le contexte si aucune couleur n'est spécifiée
@@ -198,8 +203,18 @@ class View:
             print(line)
 
     def display_selector_multiple(self,prompt:str,choices:list[str]):
-        indexes = sv.routines.basket(prompt,options=choices, permit = True,escapable = False,positive_mark='['+colored("X","cyan")+']')
+        indexes = sv.routines.basket(prompt,options=choices,mark='', permit = True,escapable = False,positive_mark='['+colored("X","cyan")+']')
         return indexes
+    
+    def display_input(self,prompt:str):
+        return sv.routines.input(prompt,mark="")
+      
+    def display_wait(self,prefix:str):
+        
+        with sv.graphics.SpinProgress(prefix=prefix+": ",mark="",epilogue =prefix):
+            for i in range(20):
+                time.sleep(0.1)
+        
 
     # Easter Egg
     def display_themis_the_cat(self):

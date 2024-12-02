@@ -2,7 +2,7 @@ import os
 import shutil
 import psutil
 from math import ceil
-
+import platform
 
 def get_free_disk_space_gb():
     total, used, free = shutil.disk_usage("/")

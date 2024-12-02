@@ -353,7 +353,8 @@ Components:
             package: None
             version XP and later:
               architecture:
-                - 32/64bits
+                - 32bit
+                - 64bit
         MacOs:
           MacOs:
             package: None
@@ -378,7 +379,7 @@ Components:
         Aix:
           Aix:
             package: rpm
-            version 6.1 and later:
+            version 6.1 and later:  
               architecture:
                 - PowerPC
 
