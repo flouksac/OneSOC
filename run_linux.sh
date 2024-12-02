@@ -48,7 +48,7 @@ is_root() {
     if [ "$EUID" -ne 0 ]; then
         handle_error "Relancer en tant qu'administrateur"
     else 
-        handle_succes "Le script est lancé en tant qu'administrateur"
+        handle_success "Le script est lancé en tant qu'administrateur"
     fi
 }
 
