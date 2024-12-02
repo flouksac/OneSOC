@@ -155,6 +155,25 @@ install_pip() {
     fi
 }
 
+# Cas d'utilisation : Installer module venv
+install_module_venv() {
+    if command -v apt &> /dev/null; then 
+        echo "Installation du module venv via apt ..."
+        sudo apt install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_success "Installation du module venv reussie"
+    elif command -v yum &> /dev/null; then
+        echo "Installation du module venv via uym ..."
+        sudo yum install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_succes "Installation du module venv reussie"
+    elif command -v dnf &> /dev/null; then
+        echo "Installation du module venv via dnf ..."
+        sudo dnf install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_success "Installation du module venv reussie"
+    else 
+        handle_error "Gestionnaire de paquets non pris en charge"
+    fi
+}
+
 
 # Cas d'utilisation : Création d'un environnement virtuel
 # Retour : 0 ou 1 (succès ou échec)
