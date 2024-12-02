@@ -40,6 +40,18 @@ check_python_installed() {
     fi
 }
 
+# Cas d'utilisation : Vérifier si l'utilisateur possède les droits administrateurs
+# Retour : 0 ou 1 (succès ou échec)
+is_root() {
+    echo "Ce script doit etre execute en tant qu'administrateur (avec sudo)."
+    echo "Verification ..."
+    if [ "$EUID" -ne 0 ]; then
+        handle_error "Relancer en tant qu'administrateur"
+    else 
+        handle_success "Le script est lancé en tant qu'administrateur"
+    fi
+}
+
 # Cas d'utilisation : Vérifier la version de python installée
 # Retour : 0 ou 1 (supérieur ou égale à 3.10 ou inférieur à 3.11)
 check_python_version() {
@@ -127,6 +139,54 @@ ensure_python() {
     fi
 }
 
+# Cas d'utilisation : Installer pip
+install_pip() {
+    if command -v apt &> /dev/null; then 
+        echo "Installation de pip via apt ..."
+        sudo apt install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
+        handle_success "Installation de pip reussie"
+    elif command -v yum &> /dev/null; then
+        echo "Installation de pip via uym ..."
+        sudo yum install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
+        handle_succes "Installation de pip reussie"
+    elif command -v dnf &> /dev/null; then
+        echo "Installation de pip via dnf ..."
+        sudo dnf install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
+        handle_success "Installation de pip reussie"
+    else 
+        handle_error "Gestionnaire de paquets non pris en charge"
+    fi
+
+    # Vérification de la présence de pip :
+    if command -v pip3 &> /dev/null; then
+        handle_success "Installation de pip reussie"
+        handle_success "Version : "
+        pip3 --version
+    else
+        handle_error "Installation de pip non reussie"
+    fi
+}
+
+# Cas d'utilisation : Installer module venv
+install_module_venv() {
+    if command -v apt &> /dev/null; then 
+        echo "Installation du module venv via apt ..."
+        sudo apt install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_success "Installation du module venv reussie"
+    elif command -v yum &> /dev/null; then
+        echo "Installation du module venv via uym ..."
+        sudo yum install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_succes "Installation du module venv reussie"
+    elif command -v dnf &> /dev/null; then
+        echo "Installation du module venv via dnf ..."
+        sudo dnf install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        handle_success "Installation du module venv reussie"
+    else 
+        handle_error "Gestionnaire de paquets non pris en charge"
+    fi
+}
+
+
 # Cas d'utilisation : Création d'un environnement virtuel
 # Retour : 0 ou 1 (succès ou échec)
 create_venv() {
@@ -135,7 +195,8 @@ create_venv() {
     fi
 
     "$python_path" -m venv venv
-    if [[ $? -eq 0 ]]; then
+
+    if [[ -d "venv" ]]; then
     handle_success "Création du VENV avec succès."
     else
         handle_error "Problème lors de la création du VENV"
@@ -178,14 +239,26 @@ launch_main_py() {
     fi
 }
 
-# 1. S'assurer de la disponibilité de python
+# 1. S'assurer que le script est lancé en tant qu'administrateur
+is_root
+
+# 2. Mise à jours des paquets
+update_packages
+
+# 3. S'assurer de la disponibilité de python
 ensure_python
 
-# 2. Création du VENV
+# 4. Installation de pip
+install_pip
+
+# 5. Installation du module venv
+install_module_venv
+
+# 6. Création du VENV
 create_venv
 
-# 3. Installation des requirements
+# 7. Installation des requirements
 install_requirements
 
-# 4. Lancement du script main.py
+# 8. Lancement du script main.py
 #launch_main_py
