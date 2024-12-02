@@ -131,19 +131,30 @@ ensure_python() {
 install_pip() {
     if command -v apt &> /dev/null; then 
         echo "Installation de pip via apt ..."
-        sudo apt install -y python3-pip || handle_error "Probleme lors de l'installation de p>
+        sudo apt install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
         handle_success "Installation de pip reussie"
     elif command -v yum &> /dev/null; then
         echo "Installation de pip via uym ..."
-        sudo yum install -y python3-pip || handle_error "Probleme lors de l'installation de p>
+        sudo yum install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
         handle_succes "Installation de pip reussie"
     elif command -v dnf &> /dev/null; then
         echo "Installation de pip via dnf ..."
-        sudo dnf install -y python3-pip || handle_error "Probleme lors de l'installation de p>
+        sudo dnf install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
         handle_success "Installation de pip reussie"
     else 
         handle_error "Gestionnaire de paquets non pris en charge"
+    fi
+
+    # Vérification de la présence de pip :
+    if command -v pip3 &> /dev/null; then
+        handle_success "Installation de pip reussie"
+        handle_success "Version : "
+        pip3 --version
+    else
+        handle_error "Installation de pip non reussie"
+    fi
 }
+
 
 # Cas d'utilisation : Création d'un environnement virtuel
 # Retour : 0 ou 1 (succès ou échec)
