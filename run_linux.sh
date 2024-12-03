@@ -20,6 +20,7 @@ handle_error () {
 # Cas d'utilisation : Identifier un succès
 handle_success() {
     echo -e "\033[32mSuccès : $1\033[0m"
+    echo
     return 0
 }
 
@@ -80,15 +81,15 @@ update_packages() {
     # Vérification de l'outil de gestion de paquets et exécution des commandes appropriées
     if command -v apt-get &> /dev/null; then
         echo "Utilisation de apt-get pour mettre à jour les paquets..."
-        apt-get update && apt-get upgrade -y || handle_error "Échec de la mise à jour des paquets avec apt."
+        apt-get update &> /dev/null && apt-get upgrade &> /dev/null -y || handle_error "Échec de la mise à jour des paquets avec apt."
         handle_success "Mise à jour des paquets terminée."
     elif command -v yum &> /dev/null; then
         echo "Utilisation de yum pour mettre à jour les paquets..."
-        yum update -y || handle_error "Échec de la mise à jour des paquets avec yum."
+        yum update -y &> /dev/null || handle_error "Échec de la mise à jour des paquets avec yum."
         handle_success "Mise à jour des paquets terminée."
     elif command -v dnf &> /dev/null; then
         echo "Utilisation de dnf pour mettre à jour les paquets..."
-        dnf update -y || handle_error "Échec de la mise à jour des paquets avec dnf."
+        dnf update -y &> /dev/null || handle_error "Échec de la mise à jour des paquets avec dnf."
         handle_success "Mise à jour des paquets terminée."
     else
         handle_error "Gestionnaire de paquets non pris en charge"
@@ -103,15 +104,15 @@ install_python() {
     # Vérification de l'outil de gestion de paquets et exécution des commandes appropriées
     if command -v apt-get &> /dev/null; then
         echo "Utilisation de apt pour installer python..."
-        apt-get install python$python_default -y || handle_error "Problème lors de l'installation de python $python_default avec apt."
+        apt-get install python$python_default -y &> /dev/null || handle_error "Problème lors de l'installation de python $python_default avec apt."
         handle_success "Installation de python terminée."
     elif command -v yum &> /dev/null; then
         echo "Utilisation de yum pour installer python..."
-        yum install python$python_default -y || handle_error "Problème lors de l'installation de python $python_default avec yum."
+        yum install python$python_default -y &> /dev/null || handle_error "Problème lors de l'installation de python $python_default avec yum."
         handle_success "Installation de python terminée."
     elif command -v dnf &> /dev/null; then
         echo "Utilisation de dnf pour installer python..."
-        dnf install python$python_default -y || handle_error "Problème lors de l'installation de python $python_default avec dnf."
+        dnf install python$python_default -y &> /dev/null || handle_error "Problème lors de l'installation de python $python_default avec dnf."
         handle_success "Installation de python terminée."
     else
         handle_error "Gestionnaire de paquets non pris en charge"
@@ -143,25 +144,21 @@ ensure_python() {
 install_pip() {
     if command -v apt &> /dev/null; then 
         echo "Installation de pip via apt ..."
-        sudo apt install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
-        handle_success "Installation de pip reussie"
+        sudo apt install -y python3-pip &> /dev/null || handle_error "Probleme lors de l'installation de pip"
     elif command -v yum &> /dev/null; then
         echo "Installation de pip via uym ..."
-        sudo yum install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
-        handle_succes "Installation de pip reussie"
+        sudo yum install -y python3-pip &> /dev/null || handle_error "Probleme lors de l'installation de pip"
     elif command -v dnf &> /dev/null; then
         echo "Installation de pip via dnf ..."
-        sudo dnf install -y python3-pip || handle_error "Probleme lors de l'installation de pip"
-        handle_success "Installation de pip reussie"
+        sudo dnf install -y python3-pip &> /dev/null || handle_error "Probleme lors de l'installation de pip"
     else 
         handle_error "Gestionnaire de paquets non pris en charge"
     fi
 
     # Vérification de la présence de pip :
     if command -v pip3 &> /dev/null; then
-        handle_success "Installation de pip reussie"
-        handle_success "Version : "
-        pip3 --version
+        echo "Installation de pip reussie "
+        handle_success "Version : $(pip3 --version)"
     else
         handle_error "Installation de pip non reussie"
     fi
@@ -171,15 +168,15 @@ install_pip() {
 install_module_venv() {
     if command -v apt &> /dev/null; then 
         echo "Installation du module venv via apt ..."
-        sudo apt install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        sudo apt install -y python3-venv &> /dev/null || handle_error "Probleme lors de l'installation du module venv"
         handle_success "Installation du module venv reussie"
     elif command -v yum &> /dev/null; then
         echo "Installation du module venv via uym ..."
-        sudo yum install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        sudo yum install -y python3-venv &> /dev/null || handle_error "Probleme lors de l'installation du module venv"
         handle_succes "Installation du module venv reussie"
     elif command -v dnf &> /dev/null; then
         echo "Installation du module venv via dnf ..."
-        sudo dnf install -y python3-venv || handle_error "Probleme lors de l'installation du module venv"
+        sudo dnf install -y python3-venv &> /dev/null || handle_error "Probleme lors de l'installation du module venv"
         handle_success "Installation du module venv reussie"
     else 
         handle_error "Gestionnaire de paquets non pris en charge"
@@ -194,7 +191,8 @@ create_venv() {
         handle_error  "python_path non défini, impossible de créer le VENV."
     fi
 
-    "$python_path" -m venv venv
+    echo "Creation du venv en cours ..."
+    "$python_path" -m venv venv &> /dev/null
 
     if [[ -d "venv" ]]; then
     handle_success "Création du VENV avec succès."
@@ -212,7 +210,7 @@ install_requirements() {
 
     # Installer les modules depuis requirements.txt
     echo "Installation des modules depuis requirements.txt..."
-    ./venv/bin/python -m pip install -r requirements.txt
+    ./venv/bin/python -m pip install -r requirements.txt &> /dev/null
     if [[ $? -eq 0 ]]; then
     handle_success "Modules installés avec succès."
     else
