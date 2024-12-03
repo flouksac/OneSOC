@@ -148,48 +148,55 @@ class Parser:
     def parse_manually(self):
         self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="light_cyan")
 
-        temp_controller = HostController()
-        
-        # help
-        allowed_actions = [action.name for action in self.model.get_all_actions()]
+        host_controller = HostController()
+
+        all_components = self.model.get_all_components()
+        mapping_component_and_supported_version = {}
+
+        for component in all_components:
+            for platform in component.supported_platform:
+                try:
+                    if host_controller.is_fully_compatible(platform):
+                        mapping_component_and_supported_version[component] = ["fully_compatible",platform]
+
+                    elif host_controller.is_minimum_compatible(platform):
+                        mapping_component_and_supported_version[component] = ["minimum_compatible", platform]
+
+
+                except Exception as e:
+                    self.view.display(f"Match os failed : {e}", level=4, context="Debug")
+
+        possible_action = []
+        for component in mapping_component_and_supported_version.keys(): # -> tout les composants compatible
+            for component_action in component.actions: # -> pour chaque actions de chaque composant comptabile
+                # dans tout les composants on veut voir si leurs actions matchent avec les actions qui existent
+                if component_action.name  not in [action.name for action in possible_action] :
+                        possible_action.append(component_action)
+
+
         chosen_actions = set()
         while len(chosen_actions) == 0:
-            chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ", allowed_actions)
+            chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ", [action.name for action in possible_action])
             print()
 
         for action in [action for index,action in enumerate(self.model.get_all_actions()) if index in chosen_actions ]:
 
-            all_components = [component for component in self.model.get_all_components_by_action(action)] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine 
-            
-            allowed_components = []
-            supported_platform = []
-            for component in all_components:
-                for platform in component.supported_platform : 
-                
-                    try :
-                        if temp_controller.is_fully_compatible(platform):
-                            # print(f"The component {component.name} is fully compatible with the current host platform")
-                            supported_platform.append(platform)
-                            allowed_components.append(component)
-                        elif temp_controller.is_minimum_compatible(platform):
-                            #print(f"platform seems to be compatible")
-                            supported_platform.append(platform)
-                            allowed_components.append(component)
+            all_components = [component for component in self.model.get_all_components_by_action(action.name)] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine
 
-                    except Exception as e:
-                        pass
-                        # print(e) 
-            
-            allowed_components_names = [component.name for component in allowed_components ]
-            
+            supported_component = []
+            for component in all_components:
+                if component in mapping_component_and_supported_version.keys():
+                    supported_component.append(component)
+
+
+
+            allowed_components_names = [component.name for component in supported_component ]
+
             chosen_components = set()
             while len(chosen_components) == 0:
                 chosen_components = self.view.display_selector_multiple("With the action : " +colored(f"{action.name.upper()}","light_cyan")+",\nSelect the component that you need : ",allowed_components_names)
 
-            for component in [component for index,component in enumerate(allowed_components) if index in chosen_components ]:
-                
-                   
-                
+            for component in [component for index,component in enumerate(supported_component) if index in chosen_components ]:
                 
                 options = {}
                 if action.name.lower() in ["install","config"]:
@@ -197,12 +204,29 @@ class Parser:
                     
                     for option in component.options:
                     
-                        # on demande si le parammetre courant est gardé avec la valeur par default ou on le change 
-                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default: '{option.value}') : ") or option.value
-                        print(colored(value,"light_cyan"))
+                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default: '{option.value}') : ") or str(option.value)
+                        self.view.display(value,2,color="light_cyan")
                         options[option.key] = value
-                        #print ("you will have to parameter this option : ",option.key) -> prettydict dans view avec un choix pour etre sure
-                
+
+
+                    self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2)
+                    self.view.display_pretty_dict(options)
+
+
+                    user_has_confirm = self.view.display_agree(f"Do you want to keep this configuration and run '"+colored(action.name,"light_cyan")+"' on '"+colored(component.name,"light_cyan")+"'? ",True)
+                    if not user_has_confirm:
+                        self.view.display("Silent Aborting without causing any error",0,context="Fatal")
+                        exit(1)
+
+                    self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
+                                           colored(component.name,"light_cyan")+"' ")
+                    self.view.display("Please wait and do nothing while the action is not done",2)
+
+
+                # barre de progression dans chaque controlleur
+
+
+
                 # are you sure you want to .... with ... ? ( yes ? ignore and pass to the next instruction ? exit the script ?)
                 # if pass
                 #    continue
@@ -223,9 +247,7 @@ class Parser:
                     print(f"\n  Running : {action.name} on {component.name}")
             
             print("")
-        
-        # component
-        # param
+
 
         pass
 

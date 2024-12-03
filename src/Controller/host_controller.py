@@ -51,26 +51,27 @@ class HostController:
                 raise Exception("You need to run this script with admin rights")
         
         
-        if  (platform.minimum_ram is not None and platform.minimum_ram > self.host.minimum_ram ):
+        if platform.minimum_ram is not None and platform.minimum_ram > self.host.minimum_ram:
             raise Exception("YOU NEED MORE RAM, GO TO SHOP")
             
-        if   (platform.minimum_cpu_core is not None and platform.minimum_cpu_core > self.host.minimum_cpu_core ):
+        if platform.minimum_cpu_core is not None and platform.minimum_cpu_core > self.host.minimum_cpu_core:
             raise Exception("YOU NEED MORE CPU, GO TO SHOP")
 
 
-        if (platform.minimum_free_space is not None and platform.minimum_free_space > self.host.minimum_free_space ):
+        if platform.minimum_free_space is not None and platform.minimum_free_space > self.host.minimum_free_space:
             raise Exception("YOU NEED MORE SPACE, BUY A NAS")
         
-        
-        if not (platform.architecture is not None and self.host.architecture.lower() in platform.architecture.lower()) :
+        if platform.architecture !="None" and self.host.architecture.lower() not in platform.architecture.lower():
             raise Exception("The architecture of the CPU is not compatible")
         
-        if not (self.host.os_type.lower() in platform.os_type.lower()):
+        if self.host.os_type.lower() not in platform.os_type.lower():
             raise Exception("Your os type is not supported")
-        
-        if  ((platform.package is not None and self.host.package is not None) 
-                and platform.package.lower() not in self.host.package ):           
-            raise Exception("A package manager is missing on your platform")
+
+
+        if  platform.package is not None and None and self.host.package is not None:
+            if not ((self.host.package in ["dnf","yum"] and platform.package == "rpm")
+                    or (self.host.package in ["apt"] and platform.package == "deb")) :
+                raise Exception("A package manager is missing on your platform")
 
         return True
         
@@ -82,16 +83,16 @@ class HostController:
         except Exception as e :
             raise e
 
-        if  (platform.recommended_ram is not None and platform.recommended_ram > self.host.minimum_ram ): 
+        if platform.recommended_ram is not None and platform.recommended_ram > self.host.minimum_ram:
             return False
         
-        if  (platform.recommended_cpu_core is not None and platform.recommended_cpu_core > self.host.minimum_cpu_core): 
+        if platform.recommended_cpu_core is not None and platform.recommended_cpu_core > self.host.minimum_cpu_core:
             return False
 
-        if  (platform.recommended_free_space is not None and platform.recommended_free_space > self.host.minimum_free_space): 
+        if platform.recommended_free_space is not None and platform.recommended_free_space > self.host.minimum_free_space:
             return False
 
-        if not platform.recommended_os.lower() in self.host.recommended_os.lower() :
+        if  platform.recommended_os.lower() not in self.host.recommended_os.lower() :
             return False
             
         platform_version = platform.version.split(" ")

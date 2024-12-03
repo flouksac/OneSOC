@@ -214,7 +214,10 @@ class View(metaclass=Singleton):
         with sv.graphics.SpinProgress(prefix=prefix+": ",mark="",epilogue =prefix):
             for i in range(20):
                 time.sleep(0.1)
-        
+
+    def display_agree(self,prompt:str,default=True):
+        return sv.routines.inquire(prompt,default=default,mark="")
+
 
     # Easter Egg
     def display_themis_the_cat(self):

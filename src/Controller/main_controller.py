@@ -22,12 +22,12 @@ class Controller(metaclass=Singleton):
         self.view.display_introduction()
         self.view.display_recommendation()
         
-        """
+
         # vérifier que la commande est exécuté avec des permis d'administration
         if not self.host_controller.host.admin_rights_needed:
             self.view.display("This script should be run with admin rights, run it again as admin/sudo", level=0, context="Fatal")
             exit(1)
-        """
+
         
         self.view.display("Initialization completed\n", level=4, context="Success")
         
