@@ -5,10 +5,10 @@ from Model.main_model import Model
 from View.main_view import View
 
 class AbstractComponentController(ABC):
-    def __init__(self,options:list,model:Model,view:View):
+    def __init__(self,options:list):
         self.host = HostController().get_host()
-        self.model = model
-        self.view = view
+        self.model = Model()
+        self.view = View()
         self.component = None
 
     def parse_option(self):

@@ -4,8 +4,8 @@ from View.main_view import View
 
 
 class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre est important
-    def __init__(self, options: list, model: Model, view: View):
-        super().__init__(options, model, view)
+    def __init__(self, options: list):
+        super().__init__(options)
 
     def info(self):
         pass

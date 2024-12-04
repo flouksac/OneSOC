@@ -109,15 +109,14 @@ class Parser:
         if self.args.info is not None:
             if len(self.args.info) == 0:
                 for component in self.model.get_all_components():
-                    controller_instance = self.get_controller(component.name)([], self.model, self.view)
+                    controller_instance = self.get_controller(component.name)([])
                     controller_instance.info()
 
                 print("Informations pour tous les composants installés : [...]")
             else:
 
                 for i in range(len(self.args.info)):
-                    controller_instance = self.get_controller(self.args.info[i])(self.args.install_option,
-                                                                                 self.model, self.view)
+                    controller_instance = self.get_controller(self.args.info[i])(self.args.install_option)
                     controller_instance.info()
 
         if self.args.healthcheck is not None:
@@ -132,8 +131,7 @@ class Parser:
             else:
                 for i in range(len(self.args.install)):
                     # config option
-                    controller_instance = self.get_controller(self.args.install[i])(self.args.install_option,
-                                                                                    self.model, self.view)
+                    controller_instance = self.get_controller(self.args.install[i])(self.args.install_option)
                     controller_instance.install()
 
         if self.args.config:
@@ -222,30 +220,15 @@ class Parser:
                                            colored(component.name,"light_cyan")+"' ")
                     self.view.display("Please wait and do nothing while the action is not done",2)
 
+                try :
+                    getattr(self.get_controller(component.name)(options),action.name.lower())()
+                    # barre de progression dans chaque controlleur
 
-                # barre de progression dans chaque controlleur
+                except Exception as e:
+                    self.view.display(f"A problem occured while trying to {action.name} on {component.name} : {e}", level=0, context="Fatal")
+                    exit(1)
 
 
-
-                # are you sure you want to .... with ... ? ( yes ? ignore and pass to the next instruction ? exit the script ?)
-                # if pass
-                #    continue
-                # if abord ; exit()
-                # print running blablabla ...
-                # try :
-                #     self.get_controller(component.name)(options,model,view).action_name() <- avec action_name() qui doit etre appeler dynamiquement
-                #     print sucess ...
-                # except: 
-                #     print nanana error/fatal
-                
-                if options:               
-                    
-                    
-                    print(f"\n  Running : {action.name} on {component.name} with options : {options}")   
-                     
-                else : 
-                    print(f"\n  Running : {action.name} on {component.name}")
-            
             print("")
 
 
