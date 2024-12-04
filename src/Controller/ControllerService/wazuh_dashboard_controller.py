@@ -1,6 +1,5 @@
 from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
-from Model.main_model import Model
-from View.main_view import View
+ 
 
 
 class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre est important

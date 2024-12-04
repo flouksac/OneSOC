@@ -84,7 +84,16 @@ Components:
             version 9: 
               architecture: None               
 
-        Windows: None
+        Windows:
+          Windows:
+            package: None
+            version XP and later:
+              architecture:
+                - 32bit
+                - 64bit
+
+
+        # Windows: None
         MacOs: None
 
     

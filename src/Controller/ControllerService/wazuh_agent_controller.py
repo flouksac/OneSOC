@@ -1,16 +1,18 @@
-import shutil
-import subprocess
+ 
 from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
  
 
 
-class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre est important
+class Wazuh_Agent_Controller(AbstractComponentServiceController):  # L'odre est important
     def __init__(self, options: list):
         super().__init__(options)
 
     def info(self):
         super().info()
 
+
+
+        
         # connaitre la version du support
         # parcourir les services en listant les installer
         # et version
@@ -19,7 +21,6 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
     def healthcheck(self):
         # info
         # est ce que les containers sont sain
-        # des erreurs dans les journaux ?
         # voir les configs
         pass
 

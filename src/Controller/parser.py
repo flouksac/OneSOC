@@ -36,7 +36,7 @@ class Parser:
             except (ModuleNotFoundError, AttributeError) as e:
                 continue
 
-        self.view.display("Wrong Component name :" + string_user, level=0, context="Fatal")
+        self.view.display("Wrong component name : " + string_user + ". It could be a missing controller or a wrong spelling.", level=0, context="Fatal")
         exit(1)
 
     def parse_arguments(self):
@@ -216,9 +216,9 @@ class Parser:
                         self.view.display("Silent Aborting without causing any error",0,context="Fatal")
                         exit(1)
 
-                    self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
-                                           colored(component.name,"light_cyan")+"' ")
-                    self.view.display("Please wait and do nothing while the action is not done",2)
+                self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
+                                        colored(component.name,"light_cyan")+"' ")
+                self.view.display("Please wait and do nothing while the action is not done.\n",2)
 
                 try :
                     getattr(self.get_controller(component.name)(options),action.name.lower())()

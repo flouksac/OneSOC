@@ -29,10 +29,10 @@ class HostController:
             "recommended_cpu_core": get_free_disk_space_gb(),
 
             "os_type": get_os_type(),
-            "recommended_os": get_os(),  # Nom
+            "recommended_os": get_os(), 
             "package": package,
-            "version": get_os_version(),  # Version
-            "architecture": get_cpu_architecture(),  # TODO archi-proc
+            "version": get_os_version(),  
+            "architecture": get_cpu_architecture(),  
 
             "admin_rights_needed": retrieve_is_admin()
         }
@@ -40,6 +40,7 @@ class HostController:
 
     def get_host(self):
         return self.host
+    
 
     def is_minimum_compatible(self,platform:Platform) -> bool:
         

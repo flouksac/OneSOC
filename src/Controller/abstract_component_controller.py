@@ -7,6 +7,7 @@ from View.main_view import View
 class AbstractComponentController(ABC):
     def __init__(self,options:list):
         self.host = HostController().get_host()
+        self.component_name=str(self.__class__.__name__.replace("_Controller","").replace("_","-"))
         self.model = Model()
         self.view = View()
         self.component = None
