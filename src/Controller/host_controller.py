@@ -1,7 +1,3 @@
-import ctypes
-import os
-import shutil
-
 from Model.ModelObjects.platform import Platform
 from Utils.os_info import get_os, get_os_type, get_os_version, retrieve_is_admin, retrieve_package ,get_cpu_architecture
 from Utils.hardware_info import get_ram_in_gb, get_free_disk_space_gb, get_cpu_core_count

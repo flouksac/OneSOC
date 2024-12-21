@@ -1,23 +1,52 @@
+# built-in module
 import os
 import time
+import re
+from typing import Literal
 
-from termcolor import colored
+# graphical module
 import survey as sv
+from rich.console import Console
+from rich.theme import Theme
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, SpinnerColumn, \
+    TimeElapsedColumn
+import termcolor
 
+# home made module
+from DesignPattern.singleton import Singleton
+from Model.ModelObjects.action import Action
+from Model.ModelObjects.component import Component
+from Model.ModelObjects.option import Option
 from Utils.os_info import get_os_type
 
-from Model.ModelObjects.component import Component
-from Model.ModelObjects.action import Action
-from Model.ModelObjects.option import Option
+if get_os_type() == "Windows": os.system("color")  # permet de pouvoir afficher la couleur sous windows
 
-from DesignPattern.singleton import Singleton
+def colored(text: str, color: Literal["black", "grey", "red", "green", "yellow", "blue", "magenta", "cyan",
+                                      "light_grey", "dark_grey", "light_red", "light_green", "light_yellow",
+                                      "light_blue", "light_magenta", "light_cyan", "white"] | None = None) -> str:
+    """
+    Colorize a text with the given color.
 
-if get_os_type()=="Windows" : os.system("color") # permet de pouvoir afficher la couleur sous windows
+    Args:
+        text (str): The text to colorize.
+        color (str): The color to apply.
+
+    Returns:
+        str: The colorized text.
+    """
+    return termcolor.colored(text, color)
 
 
 class View(metaclass=Singleton):
-    
-    def __init__(self, verbosity = 2) -> None:
+    DEFAULT_STYLES = {
+        "fatal": ("error", ":skull:"),
+        "error": ("error", ":x:"),
+        "success": ("success", ":white_check_mark:"),
+        "warning": ("warning", ":warning:"),
+        "info": ("info", ":speech_balloon:"),
+    }
+
+    def __init__(self, verbosity=2) -> None:
         # verbosity :
         # 0 -> fundamental
         # 1 -> important
@@ -26,10 +55,20 @@ class View(metaclass=Singleton):
         # 4 -> debug
         self.verbosity = verbosity
 
+        self.theme = Theme({
+            "info": "white",
+            "warning": "bold yellow",
+            "error": "bold red",
+            "success": "bold green",
+            "banner": "cyan",
+            "highlight": "bright_cyan",
+        })
+        self.console = Console(theme=self.theme)
+
     def set_verbosity(self, level):
         self.verbosity = level
 
-    def display(self,message:str,level:int=2, context:str="", color:str=None) :
+    def display(self, message: str, level: int = 2, context: str = None, color: str = None, indent: int = 0):
         """print message depending of the verbosity of the programme and the message level info
 
         Args:
@@ -37,82 +76,80 @@ class View(metaclass=Singleton):
             level (int): level of the importance of the message
             context (str): Préfix pour qualifier le message ex : [WARNING] Incompatible prompt, where "warning" is the context
             color (str): Color of the text to display
+            indent (int): indentation of the message
         """
-        
-        # definir des règles , en tant que fundamental, on voudrait seulement voir les erreurs et les succées
-        
-        # si context = certain type on peut définir une couleur particulière ? 
-        
-        if self.verbosity >= level:
-
-            context_mapping = {"fatal":   ("red",         "☠️ "),
-                               "error":   ("red",         "❌ "),
-                               "success": ("light_green",  "✅️"),
-                               "warning": ("yellow",      "⚠️ "),
-                               "info":    ("light_grey",   "💬")
-                               }
-
-            # Assigne la couleur et le symbole basés sur le contexte si aucune couleur n'est spécifiée
-            if context.lower() not in context_mapping.keys() and context!="":
-                context= f"[{context.upper()}]"
-            else :
-                for keyword, (default_color, symbol) in context_mapping.items():
-                    if keyword in context.lower():
-                        color = default_color
-                        context = "[" + symbol + " " + context.upper() + "]"
-                        break
-
-
-
-            # Ajoute le contexte au message s'il est fourni
-            full_message = f"{context} {message}" if context else message
-
-            # Affiche le message mieux que HTLM et CSS ;)
-            print(colored(full_message, color))
-
-    def display_pretty_dict(self, dictionnary: dict, level: int = 0, color: str = None, indent: int = 0):
 
         if self.verbosity >= level:
-            for key, value in dictionnary.items():
+            if context and context.lower() == "debug":
+                self.console.log(
+                    f"{' ' * indent} [:robot: {context.upper()}] [{color if color else 'info'}]{message}[/{color if color else 'info'}]",
+                    highlight=False
+                )
+                return
 
-                # Gérer la couleur en fonction du type de valeur
+            if context is None:
+                self.console.print(" " * indent + message, style=color if color else "info",highlight=False)
+                return
+            style, emoji = self.DEFAULT_STYLES.get(context.lower(), ("info", ":speech_balloon:"))
+            style = color if color else style
+            formatted_context = f"[{emoji} {context.upper()}]" if context.lower() in self.DEFAULT_STYLES else f"[{context.upper()}]"
+            indentation = " " * indent
+
+            self.console.print(f"{indentation}{formatted_context} [{style}]{message}[/]",highlight=False)
+
+    def display_pretty_dict(self, dictionary: dict, level: int = 0, indent: int = 0):
+        """
+        Affiche un dictionnaire avec une mise en forme stylisée à l'aide de rich.
+
+        Args:
+            dictionary (dict): Le dictionnaire à afficher.
+            level (int): Niveau de verbosité requis pour afficher le dictionnaire.
+            indent (int): Nombre d'espaces pour l'indentation.
+        """
+        if self.verbosity >= level:
+            for key, value in dictionary.items():
+                # Gérer la couleur et le style en fonction du type de valeur
                 if isinstance(value, bool):
-                    value_str = colored(str(value), 'light_magenta')
+                    value_str = f"[magenta]{value}[/magenta]"
                 elif isinstance(value, str):
-                    value_str = colored(f'"{value}"', 'light_blue')
-                elif isinstance(value, int) or isinstance(value, float):
-                    value_str = colored(str(value), 'light_cyan')
+                    value_str = f"[bright_cyan]\"{value}\"[/bright_cyan]"
+                elif isinstance(value, (int, float)):
+                    value_str = f"[bright_blue]{value}[/bright_blue]"
                 elif isinstance(value, dict):
-                    print(" " * indent + f"{key}:")
-                    self.display_pretty_dict(value, level, color, indent + 3)
+                    # Afficher le sous-dictionnaire avec une indentation supplémentaire
+                    self.console.print(" " * indent + f"[bold]{key}[/bold]:")
+                    self.display_pretty_dict(value, level, indent + 3)
                     continue
                 else:
-                    # Autres types sans couleur spécifique
-                    value_str = str(value)
+                    # Autres types sans style spécifique
+                    value_str = f"{value}"
 
-                print(" " * indent + f"{key}"+colored(":","white")+f" {value_str}")
+                # Afficher la clé et la valeur avec l'indentation appropriée
+                self.display(f"{' ' * indent}[bold]{key}[/bold]: {value_str}")
+
+            # Ajouter une ligne vide après le dictionnaire principal
             if indent == 0:
-                print(" ")
+                self.display("")
 
     def display_banner(self):
-        banner_lines = [colored("\n  )                      (         )            ", "blue"),
-                        colored(r"( /(                      )\ )   ( /(      (    ", "blue"),
-                        colored(r" )\())             (      (()/(   )\())     )\  ", "light_blue"),
-                        colored(r"((_)\     (       ))\      /(_)) ((_)\    (((_) ", "cyan"),
-                        colored(r"  ((_)    )\ )   /((_)    (_))     ((_)   )\___ ", "cyan"),
-                        colored(r" / _ \   _(_/(  (_))      / __|   / _ \  ((/ __|", "light_cyan"),
-                        colored(r"| (_) | | ' \)) / -_)  -  \__ \  | (_) |  | (__ ", "white"),
-                        colored(r" \___/  |_||_|  \___|     |___/   \___/    \___|", "white"),
-                        colored("\n------------------ By OnlySOC ------------------\n", "cyan")]
+        banner_lines = ["[blue]\n   )                     (          )            [/blue]",
+                        "[blue]( /(                      )\\ )   ( /(      (    [/blue]",
+                        "[bright_blue] )\\())             (      (()/(   )\\())     )\\  [/bright_blue]",
+                        "[cyan]((_\\     (        ))\\      /(_)) ((_)\\    (((_) [/cyan]",
+                        "[cyan]  (([/cyan][white]_[/white][cyan])    )\\ )   /((_)    ([/cyan][white]_[/white][cyan]))     (([/cyan][white]_[/white][cyan])   )\\\[/cyan][white]___[/white][cyan]\\ [/cyan]",
+                        "[white] / _ \\   _[/white][bright_cyan](_/(  (_))      [/bright_cyan][white]/ __|   / _ \\  [/white][bright_cyan](([/bright_cyan][white]/ __|[/white]",
+                        "[white]| (_) | | ' \\\[/white][bright_cyan]))[/bright_cyan][white] / -_)  -  \\__ \\  | (_) |  | (__ [/white]",
+                        "[white] \\___/  |_||_|  \\___|     |___/   \\___/    \\___|[/white]",
+                        "[cyan]\n------------------ [/cyan][white]By OnlySOC[/white][cyan] ------------------\n[/cyan]",
+                        ]
 
-        for lines in banner_lines:
-            print(lines)
-
+        for line in banner_lines:
+            self.display(line)
 
     def display_introduction(self):
 
         if self.verbosity >= 2:
-            introduction_message = [colored("General overview : \n", "light_cyan"),
+            introduction_message = ["[highlight]General overview : \n[/highlight]",
                                     "The goal of this project is to create a single installation script that provides "
                                     "flexibility in deploying a SOC. ",
                                     "You can either deploy Wazuh on a single server or distribute its components (manager, "
@@ -122,109 +159,242 @@ class View(metaclass=Singleton):
                                     "The SOC also includes Suricata (integrated through SELKS), and the script manages its "
                                     "integration with Wazuh as well.\n"]
 
-            for message in introduction_message:
-                print(message)
+            for line in introduction_message:
+                self.display(line)
 
     def display_recommendation(self):
         if self.verbosity >= 2:
-            recommendation_message = [colored("Recommendation : \n", "light_cyan"),
-                                      "To maximize the chances of a successful installation, here are our recommendations :",
-                                    # " - Install Wazuh components on a clean Linux machine such as the ones below \n",
-                                    # "   +- OS ------------------------------+ +- RAM (GB) -+- CPU (cores) -+  ",
-                                    # "   | Amazon Linux 2                    | | 16         | 8             |  ",
-                                    # "   | CentOS 7, 8                       | +------------+---------------+  ",
-                                    # "   | Red Hat Enterprise Linux 7, 8, 9  | +- Storage (GB) -------------+  ",
-                                    # "   | Ubuntu 16.04, 18.04, 20.04, 22.04 | | 250                        |  ",
-                                    # "   +-----------------------------------+ +----------------------------+  ",
-                                      "\n - Respect these steps, whatever is it a all-in-one install or a cluster install :",
-                                      "   * Install the wazuh indexer first",
-                                      "   * Then install the wazuh server ",
-                                      "   * Then install the wazuh dashboard",
-                                      "   * Optionally you can install SELKS (IDS), DFIR IRIS (Ticketing),Keepass (password manager)",
-                                      "   * Install agents\n"]
+            recommendation_message = [
+                "[highlight]Recommendation : \n[/highlight]",
+                "To maximize the chances of a successful installation, here are our recommendations :",
+                # " - Install Wazuh components on a clean Linux machine such as the ones below \n",
+                # "   +- OS ------------------------------+ +- RAM (GB) -+- CPU (cores) -+  ",
+                # "   | Amazon Linux 2                    | | 16         | 8             |  ",
+                # "   | CentOS 7, 8                       | +------------+---------------+  ",
+                # "   | Red Hat Enterprise Linux 7, 8, 9  | +- Storage (GB) -------------+  ",
+                # "   | Ubuntu 16.04, 18.04, 20.04, 22.04 | | 250                        |  ",
+                # "   +-----------------------------------+ +----------------------------+  ",
+                "\n - Respect these steps, whatever is it a all-in-one install or a cluster install :",
+                "   * Install the wazuh indexer first",
+                "   * Then install the wazuh server ",
+                "   * Then install the wazuh dashboard",
+                "   * Optionally you can install SELKS (IDS), DFIR IRIS (Ticketing),Keepass (password manager)",
+                "   * Install agents\n"]
 
-            for message in recommendation_message:
-                print(message)
+            for line in recommendation_message:
+                self.display(line)
 
-   
-    def list_component(self,data:list[Component]):
-        output = [
-            colored("The different component we take in charges are the following :\n","light_cyan"),
-        ]
-        
+    def list_component(self, data: list[Component]):
+        """
+        Affiche la liste des composants avec un regroupement par type d'OS, puis par distribution.
+
+        Args:
+            data (list[Component]): Liste des composants à afficher.
+        """
+        if not data:
+            self.display("No components available to display.", level=2, color="yellow", indent=0)
+            return
+
+        self.display("The different components we take in charge are the following:\n", level=2, color="bright_cyan",
+                     indent=0)
+
         for component in data:
-            output.append(" - "+component.name+" : ")
-            output.append(colored("   "+component.role,"cyan"))
-            output.append(colored("   "+component.description.replace(r'\n','\n  '),"light_grey"))
-            output.append(colored("   Supported OS are : ","light_grey"))
+            self.display(f" - {component.name}:", level=2, color="bold", indent=0)
+            self.display(f"{component.role}", level=2, color="cyan", indent=3)
+            self.display("Supported OS are grouped by platform and distribution:", level=2, indent=3)
 
+            grouped_platforms = {}
             for platform in component.supported_platform:
-                
-                if platform.architecture=="None": # pas propre (regrouper par architecure)
-                    output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package),"light_grey"))
-                else :
-                    output.append(colored("   "+str(platform.os_type)+": "+str(platform.recommended_os)+" "+str(platform.version)+" - "+str(platform.package)+" - "+str(platform.architecture),"light_grey"))
-            output.append(" ")
-            
-        for line in output:
-            print (line)
+                grouped_platforms.setdefault(platform.os_type, {}).setdefault(platform.recommended_os, []).append(
+                    platform)
 
-    def list_option(self,options_dict:dict[str:Option]):
-        output = [
-            colored("The possible options that you can modify in :\n","light_cyan"),
-        ]
-        
-        for component_name,option_list in options_dict.items():
-            #print(type(component_name))
-            output.append(" - Component \""+component_name+"\" :")
+            for os_type, distributions in grouped_platforms.items():
+                self.display(f"{os_type}:", level=2, indent=5)
+                for distro, platforms in distributions.items():
+                    self.display(f"{distro}:", level=2, color="cyan", indent=7)
+                    for platform in platforms:
+                        version_info = f"{platform.version} - {platform.package}"
+                        if platform.architecture != "None":
+                            version_info += f" - {platform.architecture}"
+                        self.display(version_info, level=2, indent=9)
+
+
+            self.display("", level=2)
+
+    def list_option(self, options_dict: dict[str, list[Option]]):
+        """
+        Affiche les options disponibles par composant.
+
+        Args:
+            options_dict (dict[str, list[Option]]): Dictionnaire des options par composant.
+        """
+        # Introduction
+        self.display("The possible options that you can modify are:\n", level=2, color="highlight", indent=0)
+
+        # Parcourir les composants et leurs options
+        for component_name, option_list in options_dict.items():
+            self.display(f"- Component \"{component_name}\":", level=2, color="white bold", indent=1)
             for option in option_list:
-                output.append(colored("   "+option.key, "cyan")+":"+colored(" "+str(option.value), "cyan"))
-            output.append(" ")
-                
-        output.append(colored("you can modify these parameters when installing a component with","light_grey")+
-                        colored(" --install-option 'component1-ip=10.0.0.1' 'component2-ip=10.0.0.2' ","cyan")+
-                        colored("\nor when config with ","light_grey")+
-                        colored("--config-option 'component1-ip=10.0.0.1' \n","cyan"))
-                                
-        for line in output:
-            print(line)
-            
-    def list_action(self,actions:list[Action]):
-        output = [
-            colored("The possible actions you can do are :\n","light_cyan"),
-        ]
-        
+                self.display(f"{option.key}:[cyan] {option.value}[/cyan]", level=2, indent=3)
+            self.display("", level=2)
+
+        # Instructions supplémentaires
+        self.display(
+            "You can modify these parameters when installing a component with "
+            "[cyan]--install-option 'component1-ip=10.0.0.1' 'component2-ip=10.0.0.2'[/cyan]\n"
+            "or when configuring with [cyan]--config-option 'component1-ip=10.0.0.1'[/cyan].",
+            level=2,
+        )
+
+    def list_action(self, actions: list[Action]):
+        """
+        Affiche les actions disponibles avec leurs descriptions.
+
+        Args:
+            actions (list[Action]): Liste des actions à afficher.
+        """
+        # Introduction
+        self.display("The possible actions you can do are:\n", level=2, color="highlight", indent=0)
+
+        # Parcourir les actions et afficher leurs détails
         for action in actions:
-            output.append(" - "+action.name+" :")
-            output.append(colored("   "+action.command_description, "cyan"),)
-            output.append(colored("   "+action.description.replace(r'\n','\n  ')+"\n","light_grey"))
-            
-        for line in output:
-            print(line)
+            self.display(f"- {action.name}:", level=2, color="bold", indent=1)
+            self.display(f"{action.command_description}", level=2, color="cyan", indent=3)
+            self.display(action.description.replace(r'\n', '\n  ') + "\n", level=2, indent=3)
 
-    def display_selector_multiple(self,prompt:str,choices:list[str]):
-        indexes = sv.routines.basket(prompt,options=choices,mark='', permit = True,escapable = False,positive_mark='['+colored("X","cyan")+']')
+    @staticmethod
+    def display_selector_multiple(prompt: str, choices: list[str]):
+        indexes = sv.routines.basket(prompt, options=choices, index=0,
+                                     mark='', permit=True, escapable=False,
+                                     positive_mark='[' + colored("X", "cyan") + ']')
         return indexes
-    
-    def display_input(self,prompt:str):
-        return sv.routines.input(prompt,mark="")
-      
-    def display_wait(self,prefix:str):
-        
-        with sv.graphics.SpinProgress(prefix=prefix+": ",mark="",epilogue =prefix):
-            for i in range(20):
-                time.sleep(0.1)
 
-    def display_agree(self,prompt:str,default=True):
-        return sv.routines.inquire(prompt,default=default,mark="")
+    @staticmethod
+    def display_input(prompt: str, value: str , indent:int=0) -> str :
+        return sv.routines.input(" "*indent + prompt, mark="", value=value)
 
+
+    def display_wait(self, message: str, duration: float = 2.0, spinner_type: str = "balloon2", indent: int = 0):
+        """
+        Affiche un spinner avec un préfixe pendant une durée définie.
+
+        Args:
+            message (str): Texte à afficher avant le spinner.
+            duration (float): Durée en secondes pendant laquelle afficher le spinner (par défaut 2.0 secondes).
+            spinner_type (str): Type de spinner (par défaut 'dots'). Voir la documentation de rich pour d'autres options.
+            indent (int): Niveau d'indentation.
+        """
+
+        indentation = " " * indent
+        with self.console.status(f"{indentation}{message}...", spinner=spinner_type,spinner_style = "bold white") :
+            time.sleep(duration)
+
+    def display_with_type(self, value, level=2,indent: int = 0, color: str = "bright_cyan"):
+        """
+        Affiche une valeur avec son type détecté depuis une chaîne.
+
+        Args:
+            value (str): La valeur à analyser et afficher.
+            level (int): Niveau de verbosité requis pour afficher la valeur.
+            indent (int): Niveau d'indentation pour l'affichage.
+            color (str): Couleur pour la sortie via Rich.
+
+        """
+
+        if isinstance(value, str):
+            # Détection d'une adresse IP
+            if re.match(r"^\d{1,3}(\.\d{1,3}){3}$", value):
+                detected_type = "IP"
+            # Détection d'un float
+            elif re.match(r"^-?\d+\.\d+$", value):
+                detected_type = "float"
+            # Détection d'un int
+            elif re.match(r"^-?\d+$", value):
+                detected_type = "int"
+            # Détection d'une chaîne générique
+            else:
+                detected_type = "string"
+        else:
+            detected_type = type(value).__name__
+
+        # Formatage du message
+        formatted_message = f"({detected_type}) : {str(value)}"
+
+        # Affichage avec indentation
+        self.display(formatted_message, level=level, color=color, indent=indent)
+
+    @staticmethod
+    def display_agree(prompt: str, default=True,indent=0) -> bool:
+        return sv.routines.inquire(" "*indent+prompt, default=default, mark="")
+
+    def display_progress(self,indent=0, total_size: int = 100):
+        """
+        Retourne un context manager Rich pour gérer les tâches principales et secondaires.
+        """
+
+        class ProgressWrapper:
+            def __init__(wself,total_size):
+                wself.progress = None
+                wself.main_task_id = None
+                wself.sub_tasks = {}  # {ID numérique: task_id}
+                wself.total_size = total_size
+
+            def __enter__(wself):
+                wself.progress = Progress(
+                    SpinnerColumn(),
+                    TextColumn("[cyan]{task.description}[/cyan]"),
+                    BarColumn(),
+                    "[progress.percentage]{task.percentage:>3.0f}%",
+                    TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                    console=self.console,
+                    transient=False,
+                )
+                wself.progress.start()
+                wself.main_task_id = wself.progress.add_task("Main Task", total=wself.total_size)
+                return wself
+
+            def update_main_task(wself, advance=0, description=None):
+                """Met à jour la tâche principale."""
+                wself.progress.update(
+                    wself.main_task_id, advance=advance, description=description
+                )
+
+            def add_sub_task(wself, sub_id: int, description: str, total_sub=50):
+                """Crée une barre secondaire identifiée par un ID numérique."""
+                task_id = wself.progress.add_task(description, total=total_sub)
+                wself.sub_tasks[sub_id] = task_id
+
+            def update_sub_task(wself, sub_id: int, advance=0, description=None):
+                """
+                Met à jour une barre secondaire par son ID numérique.
+                Si la barre atteint son objectif, elle est automatiquement masquée.
+                """
+                task_id = wself.sub_tasks.get(sub_id)
+                if task_id is not None:
+                    wself.progress.update(task_id, advance=advance, description=description)
+                    task = wself.progress.tasks[task_id]
+                    if task.completed >= task.total:
+                        wself.progress.update(task_id, visible=False)
+                        wself.sub_tasks.pop(sub_id)
+
+            def remove_main_task(wself):
+                """Masque la barre principale une fois terminée."""
+                wself.progress.update(wself.main_task_id, visible=False)
+
+            def __exit__(wself, exc_type, exc_value, traceback):
+                wself.progress.stop()
+
+        return ProgressWrapper(total_size)
 
     # Easter Egg
-    def display_themis_the_cat(self):
-        print("\n"+colored( " _._     _,-'\"\"`-._\n"
-                            "(,-.`._,'(       |\`-/|\n"
-                            "    `-.-' \ )-`( , o o)\n"
-                            "           `-    \`_`\"'-\n",
-                            'yellow')+"\n")
+    @staticmethod
+    def display_themis_the_cat():
+        print("\n" + colored(" _._     _,-'\"\"`-._\n"
+                             "(,-.`._,'(       |\`-/|\n"
+                             "    `-.-' \ )-`( , o o)\n"
+                             "           `-    \`_`\"'-\n",
+                             'yellow') + "\n")
         return ""
+
 

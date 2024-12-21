@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
-
 from Controller.abstract_component_controller import AbstractComponentController
-from Model.main_model import Model
-from View.main_view import View
+
 
 
 class AbstractComponentDockerController(AbstractComponentController,ABC):
-    def __init__(self,options:list):
+    def __init__(self,options=None):
         super().__init__(options)
 
 

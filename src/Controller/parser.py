@@ -1,10 +1,10 @@
 import argparse
 import importlib
+import os
 
-from termcolor import colored
 from Controller.host_controller import HostController
 from Controller.list_controller import ListController
-from View.main_view import View
+from View.main_view import View,colored
 from Model.main_model import Model
 
 class Parser:
@@ -17,8 +17,8 @@ class Parser:
 
     def get_config_path(self): return self.args.config_path
 
-    def get_controller(self, string_user):  # -> renvoie dynamiquement la bonne class controller après l'avoir importé
-        controller = None
+    def get_controller(self, string_user):
+        """ Returns the correct controller class dynamically after importing it. """
         string_controller = (
                 string_user.replace("-", "_").lower() + "_controller")  # -> wazuh-indexer, Wazuh_Indexer_Controller
 
@@ -30,22 +30,22 @@ class Parser:
         for module_path in possible_paths:
             try:
                 module = importlib.import_module(module_path)
-                controller = getattr(module, string_controller.title())
-                return controller
-
+                return getattr(module, string_controller.title())
             except (ModuleNotFoundError, AttributeError) as e:
                 continue
 
-        self.view.display("Wrong component name : " + string_user + ". It could be a missing controller or a wrong spelling.", level=0, context="Fatal")
+        self.view.display("Wrong component name : " + string_user +
+                          ". It could be a missing controller or a wrong spelling.", level=0, context="Fatal")
         exit(1)
 
-    def parse_arguments(self):
+    @staticmethod
+    def parse_arguments():
         parser = argparse.ArgumentParser(prog="OneSOC", description="OneSOC deployment script", add_help=False)
 
         group_positional_arguments = parser.add_argument_group(colored("Positional arguments", "cyan"))
-        group_positional_arguments.add_argument('config_path', type=str, default="./../config.yaml", nargs='?',
-                                                help="configuration file path (default: %(default)s)")
-
+        group_positional_arguments.add_argument('config_path', type=str,
+                                                default=os.path.join(os.path.dirname(__file__), "./../../config.yaml"),
+                                                nargs='?', help="configuration file path (default: %(default)s)")
         group_options = parser.add_argument_group(colored("Options", "cyan"))
         group_options.add_argument('-h', '--help', action='help', help="Show this help message and exit")
         group_options.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2, 3, 4], default=2, required=False,
@@ -57,7 +57,6 @@ class Parser:
                                 help="List all possible action")
 
         group_list.add_argument('-lO', '--list-option', nargs='*', metavar='\"COMPONENT\"', type=str.lower,
-                                # action='store_true',
                                 help="List all option for each action")
 
         group_list.add_argument('-lC', '--list-component', action='store_true',
@@ -90,6 +89,7 @@ class Parser:
 
         return parser.parse_args()
 
+
     def parse_list(self):
         list_controller = ListController()
         
@@ -103,141 +103,129 @@ class Parser:
             list_controller.get_options(self.args.list_option)
   
             
-
     def parse_action(self):
-
         if self.args.info is not None:
-            if len(self.args.info) == 0:
-                for component in self.model.get_all_components():
-                    controller_instance = self.get_controller(component.name)([])
-                    controller_instance.info()
-
-                print("Informations pour tous les composants installés : [...]")
-            else:
-
-                for i in range(len(self.args.info)):
-                    controller_instance = self.get_controller(self.args.info[i])(self.args.install_option)
-                    controller_instance.info()
+            targets = [comp.name for comp in self.model.get_all_components()] if len(
+                self.args.info) == 0 else self.args.info
+            for target in targets:
+                self.get_controller(target)().info()
 
         if self.args.healthcheck is not None:
-            if len(self.args.healthcheck) == 0:
-                print("Vérification de la santé de tous les composants : [...]")
-            else:
-                print(f"Vérification de la santé pour les composants {', '.join(self.args.healthcheck)} : [...]")
+            targets = [comp.name for comp in self.model.get_all_components()] if len(
+                self.args.healthcheck) == 0 else self.args.healthcheck
+            for target in targets:
+                self.get_controller(target)().healthcheck()
 
-        if self.args.install:
+        if self.args.install is not None:
             if not self.args.install:
-                print("Erreur : Aucun composant spécifié pour l'installation.")
+                self.view.display("Error : No component specified for installation.", level=0, context="Fatal")
+                exit(1)
             else:
-                for i in range(len(self.args.install)):
-                    # config option
-                    controller_instance = self.get_controller(self.args.install[i])(self.args.install_option)
-                    controller_instance.install()
+                for i in range(len(self.args.install)): # in the controller install, we have to pick the options we need
+                    self.get_controller(self.args.install[i])(self.args.install_option).install()
 
-        if self.args.config:
-            print(f"Mise à jour de la configuration pour le composant {self.args.config}.")
+        if self.args.config is not None:
+            if not self.args.config:
+                self.view.display("Error : No component specified for configuration.", level=0, context="Fatal")
+                exit(1)
+            else:
+                for i in range(len(self.args.config)): # in the controller install, we have to pick the options we need
+                    self.get_controller(self.args.config[i])(self.args.config_option).config()
 
         if self.args.repair is not None:
-            if len(self.args.repair) == 0:
-                print("Réparation de tous les composants défectueux : [...]")
-            else:
-                print(f"Réparation des composants {', '.join(self.args.repair)} : [...]")
+            targets = [comp.name for comp in self.model.get_all_components()] if len(
+                self.args.repair) == 0 else self.args.repair
+            for target in targets:
+                self.get_controller(target)().repair()
+
 
     def parse_manually(self):
-        self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="light_cyan")
+        self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="bright_cyan")
 
         host_controller = HostController()
-
         all_components = self.model.get_all_components()
-        mapping_component_and_supported_version = {}
 
+        mapping_component_and_supported_version = {}
         for component in all_components:
             for platform in component.supported_platform:
                 try:
                     if host_controller.is_fully_compatible(platform):
                         mapping_component_and_supported_version[component] = ["fully_compatible",platform]
-
+                        self.view.display(f"{component.name} is fully compatible with {platform}",level=4,context="Debug",color="bright_green")
+                        break
                     elif host_controller.is_minimum_compatible(platform):
                         mapping_component_and_supported_version[component] = ["minimum_compatible", platform]
-
+                        self.view.display(f"{component.name} as the minimum compatibility with {platform}",level=4,context="Debug",color="yellow")
 
                 except Exception as e:
-                    self.view.display(f"Match os failed : {e}", level=4, context="Debug")
+                    self.view.display(f"Finding compatibility on {component.name} with your os failed : {e} with {platform} ", level=4, context="Debug",color="red")
 
         possible_action = []
-        for component in mapping_component_and_supported_version.keys(): # -> tout les composants compatible
-            for component_action in component.actions: # -> pour chaque actions de chaque composant comptabile
-                # dans tout les composants on veut voir si leurs actions matchent avec les actions qui existent
+        for component in mapping_component_and_supported_version.keys():
+            for component_action in component.actions:
                 if component_action.name  not in [action.name for action in possible_action] :
                         possible_action.append(component_action)
 
-
         chosen_actions = set()
         while len(chosen_actions) == 0:
-            chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ", [action.name for action in possible_action])
-            print()
+            chosen_actions = self.view.display_selector_multiple("Which action do you want to do ? ",
+                                                                 [action.name for action in possible_action])
+            self.view.display('')
 
         for action in [action for index,action in enumerate(self.model.get_all_actions()) if index in chosen_actions ]:
 
-            all_components = [component for component in self.model.get_all_components_by_action(action.name)] # remplacer ça par la liste des composants qui peuvent etre installer sur la machine
-
-            supported_component = []
-            for component in all_components:
-                if component in mapping_component_and_supported_version.keys():
-                    supported_component.append(component)
-
-
-
-            allowed_components_names = [component.name for component in supported_component ]
+            all_action_components = self.model.get_all_components_by_action(action.name)
+            supported_components = [c for c in all_action_components if c in mapping_component_and_supported_version]
+            allowed_names = [c.name for c in supported_components]
 
             chosen_components = set()
             while len(chosen_components) == 0:
-                chosen_components = self.view.display_selector_multiple("With the action : " +colored(f"{action.name.upper()}","light_cyan")+",\nSelect the component that you need : ",allowed_components_names)
+                chosen_components = self.view.display_selector_multiple("With the action : " +
+                                                                        colored(f"{action.name}","light_cyan")+
+                                                                        ",\nSelect the component that you need : ",allowed_names)
 
-            for component in [component for index,component in enumerate(supported_component) if index in chosen_components ]:
+            for component in [component for index,component in enumerate(supported_components) if index in chosen_components ]:
                 
                 options = {}
                 if action.name.lower() in ["install","config"]:
-                    self.view.display_wait("\nConfiguring the "+colored(component.name,"light_cyan")+" component ")
-                    
+                    self.view.display("")
+                    self.view.display_wait("You will have to configure the [bright_cyan]"+component.name+"[/bright_cyan] component ")
+                    self.view.display("Configuration of '[bright_cyan]"+component.name+"[/bright_cyan]' ",indent=2)
+
                     for option in component.options:
                     
-                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default: '{option.value}') : ") or str(option.value)
-                        self.view.display(value,2,color="light_cyan")
+                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default) : ",str(option.value), indent=2) or str(option.value)
+                        self.view.display_with_type( value,2,color="bright_cyan",indent=2)
                         options[option.key] = value
 
-
-                    self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2)
+                    """
+                    self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2,indent=2)
                     self.view.display_pretty_dict(options)
-
-
-                    user_has_confirm = self.view.display_agree(f"Do you want to keep this configuration and run '"+colored(action.name,"light_cyan")+"' on '"+colored(component.name,"light_cyan")+"'? ",True)
+                    """
+                    self.view.display("")
+                    user_has_confirm = self.view.display_agree(f"Do you want to keep this configuration and run '"+
+                                                               colored(action.name,"light_cyan")+"' on '"+
+                                                               colored(component.name,"light_cyan")+"' with the current configuration ? ",True,indent=2)
                     if not user_has_confirm:
                         self.view.display("Silent Aborting without causing any error",0,context="Fatal")
                         exit(1)
 
-                self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
-                                        colored(component.name,"light_cyan")+"' ")
-                self.view.display("Please wait and do nothing while the action is not done.\n",2)
+                #self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
+                #                        colored(component.name,"light_cyan")+"' ")
+                self.view.display("\n  Please wait and do nothing while the action is not done.",2)
 
                 try :
                     getattr(self.get_controller(component.name)(options),action.name.lower())()
-                    # barre de progression dans chaque controlleur
-
                 except Exception as e:
-                    self.view.display(f"A problem occured while trying to {action.name} on {component.name} : {e}", level=0, context="Fatal")
+                    self.view.display(f"A problem occured while trying to {action.name} on {component.name} : {e}",
+                                      level=0, context="Fatal")
                     exit(1)
 
-
-            print("")
-
-
-        pass
+            self.view.display("\n")
 
     def parse(self):
 
         if any([self.args.list_action, self.args.list_option, self.args.list_component]) or self.args.list_option == []:
-
             self.parse_list()
 
         # appel de controlleur dynamique pour ci dessous:

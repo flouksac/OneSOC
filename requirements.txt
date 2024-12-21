@@ -2,3 +2,4 @@ psutil==6.1.0
 PyYAML==6.0.2
 termcolor==2.5.0
 survey==5.4.2
+rich~=13.9.4

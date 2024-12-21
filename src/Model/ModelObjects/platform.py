@@ -26,3 +26,5 @@ class Platform:
             else:
                 print(f"Clé inconnue ignorée : {key}")
             
+    def __str__(self):
+        return f"Platform : {self.os_type} {self.version} {self.architecture} {self.package}"

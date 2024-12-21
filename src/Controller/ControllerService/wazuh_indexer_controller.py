@@ -1,11 +1,13 @@
-import shutil
-import subprocess
+import time
+from threading import Thread
+from time import sleep
+
 from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
- 
+
 
 
 class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre est important
-    def __init__(self, options: list):
+    def __init__(self, options=None):
         super().__init__(options)
 
     def info(self):
@@ -17,6 +19,8 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         pass
 
     def healthcheck(self):
+
+
         # info
         # est ce que les containers sont sain
         # des erreurs dans les journaux ?
@@ -24,32 +28,66 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         pass
 
     def install(self):
-        # self.host -> quel os,version,... ?
-        # est ce que c'est compatible
-        # non -> fatal
-        # bof -> on demande confirmation/on essaye
-        # oui -> on essaye d'installer
+        with self.view.display_progress(total_size=100) as progress:
+            # Étape 1
+            progress.update_main_task(advance=20, description="Initializing installation...")
+            self.view.display("[INFO] [STEP 1/2] Initializing installation...")
 
-        # différer par gestionnaire de packet (APT VS DNF+YUM)
+            # Sous-tâche 1
+            progress.add_sub_task(1, "Connecting to the server...")
+            time.sleep(0.5)
+            progress.update_sub_task(1, advance=1, description="Connecting to the server step 1...")
+            time.sleep(0.5)
+            progress.update_sub_task(1, advance=1, description="Connecting to the server step 2...")
+            time.sleep(0.5)
+            progress.update_sub_task(1, advance=1, description="Connecting to the server step 3...")
 
-        # méthode apt ou methode dnf
-        # on vérifie que c'est pas déjà installer
-        # (info)
-        #
-        # mise a jour des paquets
-        # installation des dépendances
-        #
-        # install
-        #
-        # healthcheck
-        # -> si problème repair
-        #
-        # -> config selon les options
-        # (config)
-        #
-        # renvoi un résumé
+            # Étape 2
+            progress.update_main_task(advance=80, description="Finalizing installation...")
+            self.view.display("[INFO] [STEP 2/2] Finalizing installation...")
 
-        self.view.display("ZAZA", level=0)
+            # Sous-tâche 2
+            progress.add_sub_task(2, "Updating configurations...")
+            time.sleep(0.5)
+            progress.update_sub_task(2, advance=1, description="Applying settings...")
+            time.sleep(0.5)
+            progress.update_sub_task(2, advance=1, description="Saving changes...")
+            time.sleep(0.5)
+            progress.update_sub_task(2, advance=1, description="Restarting services...")
+            time.sleep(0.5)
+            progress.update_sub_task(2, advance=1, description="Verification in progress...")
+
+            # Supprime la barre principale
+            progress.remove_main_task()
+
+            # Message de fin
+            self.view.display("[SUCCESS] Installation completed successfully!")
+
+            # self.host -> quel os,version,.. ?
+            # est ce que c'est compatible
+            # non -> fatal
+            # bof -> on demande confirmation/on essaye
+            # oui -> on essaye d'installer
+
+            # différer par gestionnaire de packet (APT VS DNF+YUM)
+
+            # méthode apt ou methode dnf
+            # on vérifie que c'est pas déjà installer
+            # (info)
+            #
+            # mise a jour des paquets
+            # installation des dépendances
+            #
+            # install
+            #
+            # healthcheck
+            # -> si problème repair
+            #
+            # -> config selon les options
+            # (config)
+            #
+            # renvoi un résumé
+
 
         pass
 

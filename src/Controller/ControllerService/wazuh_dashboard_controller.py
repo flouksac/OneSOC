@@ -3,7 +3,7 @@ from Controller.ControllerService.abstract_component_service_controller import A
 
 
 class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre est important
-    def __init__(self, options: list):
+    def __init__(self, options=None):
         super().__init__(options)
 
     def info(self):

@@ -30,6 +30,12 @@ class Model(metaclass = Singleton):
             if component.is_action_supported(action):
                 output.append(component)
         return output
+
+    def get_component_by_name(self,name:str) -> Component:
+        for component in self.components:
+            if component.name.lower() == name.lower():
+                return component
+        raise Exception(f"Component {name} not found")
                 
     
     def get_all_options(self) -> dict[str:Option]: 
