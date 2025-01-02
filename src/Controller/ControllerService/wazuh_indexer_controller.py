@@ -28,42 +28,189 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         pass
 
     def install(self):
-        with self.view.display_progress(total_size=100) as progress:
-            # Étape 1
-            progress.update_main_task(advance=20, description="Initializing installation...")
-            self.view.display("[INFO] [STEP 1/2] Initializing installation...")
+        with self.view.display_progress(f"Installation initialization of {self.component_name}...", indent=1,
+                                        total_size=10) as progress:
 
-            # Sous-tâche 1
-            progress.add_sub_task(1, "Connecting to the server...")
-            time.sleep(0.5)
-            progress.update_sub_task(1, advance=1, description="Connecting to the server step 1...")
-            time.sleep(0.5)
-            progress.update_sub_task(1, advance=1, description="Connecting to the server step 2...")
-            time.sleep(0.5)
-            progress.update_sub_task(1, advance=1, description="Connecting to the server step 3...")
 
-            # Étape 2
-            progress.update_main_task(advance=80, description="Finalizing installation...")
-            self.view.display("[INFO] [STEP 2/2] Finalizing installation...")
+            # ----------------------------------------------------------------------------
+            # Étape 0 : Installation of curl and tar grep + dependencies
+            # ----------------------------------------------------------------------------
+            # TODO: (placeholder) Détecter le package manager (apt, yum, dnf, zypper, etc.)
+            # TODO: Installer curl, tar, grep, etc.
+            # Sur rpm : coreutils
+            # Sur deb : debconf, adduser, procps, gnupg, apt-transport-https, ...
+            progress.update_main(new_prefix="Installation of dependencies...")
+            dependencies_subtask = progress.add_subtask("(1/2) Getting your host package manager...", 2)
+            time.sleep(1) # simulation ou placeholder d'une opération
 
-            # Sous-tâche 2
-            progress.add_sub_task(2, "Updating configurations...")
-            time.sleep(0.5)
-            progress.update_sub_task(2, advance=1, description="Applying settings...")
-            time.sleep(0.5)
-            progress.update_sub_task(2, advance=1, description="Saving changes...")
-            time.sleep(0.5)
-            progress.update_sub_task(2, advance=1, description="Restarting services...")
-            time.sleep(0.5)
-            progress.update_sub_task(2, advance=1, description="Verification in progress...")
+            progress.update_subtask(dependencies_subtask, new_prefix="(2/2) Installing dependencies..." )
+            time.sleep(1)
 
-            # Supprime la barre principale
-            progress.remove_main_task()
+            progress.update_subtask(dependencies_subtask, new_prefix="(2/2) Dependencies installed..." )
+            progress.remove_subtask(dependencies_subtask)
 
-            # Message de fin
-            self.view.display("[SUCCESS] Installation completed successfully!")
+
+            # ----------------------------------------------------------------------------
+            # Étape 1 : Récupérer certs tools (selon last version), récupérer config.yml,
+            #           selon nos parametres (avoir un dict dans le fichier yaml)
+            # ----------------------------------------------------------------------------
+            # TODO: (placeholder) Télécharger / copier config.yml
+            # TODO: Mettre à jour config.yml selon paramétrage (dict)
+            progress.update_main(new_prefix="Installation of wazuh certifications tools...")
+            wazuh_tools_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools...", 7)
+            time.sleep(1)
+
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(2/7) Retrieving certs tools..." )
+            time.sleep(1)
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(3/7) Certs tools retrieved..." )
+            time.sleep(1)
+
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(4/7) Retrieving config.yml..." )
+            time.sleep(1)
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(5/7) config.yml retrieved..." )
+            time.sleep(1)
+
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(6/7) Configuring config.yml..." )
+            time.sleep(1)
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(7/7) config.yml retrieved..." )
+            progress.remove_subtask(wazuh_tools_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 2 : Création des certificats
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Generating certificates...")
+            certificates_subtask = progress.add_subtask("(1/2) Generating certificates...", 2)
+
+            # TODO: Générer les certificats avec Wazuh cert tools
+            # TODO: dire de copier ces certificats !!!!!
+            time.sleep(1)
+
+            progress.update_subtask(certificates_subtask, new_prefix="(2/2)Certificates generated successfully..."  )
+            progress.remove_subtask(certificates_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 3 : Installation du repository Wazuh
+            # ----------------------------------------------------------------------------
+            # installer le repository wazuh
+            # rpm -> Import the GPG key.
+            #     -> Add the repository.
+            # deb -> Install the GPG key.
+            #     -> Add the repository.
+            #     -> Update the packages information.
+            progress.update_main(new_prefix="Installation du repository Wazuh...")
+            repo_subtask = progress.add_subtask("(1/3) Importing the GPG key...", total=3)
+            # TODO: (placeholder) Sur RPM : Import GPG key, add repo
+            #      Sur DEB : Install GPG key, add repo, apt-get update...
+            time.sleep(1)
+
+            progress.update_subtask(repo_subtask, new_prefix="(2/3) Adding the repository...")
+            time.sleep(1)
+
+            progress.update_subtask(repo_subtask, new_prefix="(3/3) Repository ready...")
+            progress.remove_subtask(repo_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 4 : Installation du package Wazuh indexer
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Installing Wazuh indexer package...")
+
+            install_subtask = progress.add_subtask("(1/1) Installing wazuh-indexer...", total=1)
+            # TODO: (placeholder) Démarrer le téléchargement / installation via package manager
+            time.sleep(1)
+
+            progress.update_subtask(install_subtask, new_prefix="(1/1) Wazuh indexer installed!")
+            progress.remove_subtask(install_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 5 : Configuration du Wazuh indexer
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Configuring Wazuh indexer...")
+
+            config_subtask = progress.add_subtask("(1/1) Editing indexer configuration...", total=1)
+            # TODO: (placeholder) Éditer /etc/wazuh-indexer/opensearch.yml (ou autre fichier de config)
+            time.sleep(1)
+
+            progress.update_subtask(config_subtask, new_prefix="(1/1) Wazuh indexer config updated!")
+            progress.remove_subtask(config_subtask)
+
+            # ----------------------------------------------------------------------------
+            # Étape 6 : Appliquer les certificats (commandes successives)
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Applying certificates...")
+
+            cert_subtask = progress.add_subtask("(1/1) Copying / applying certs...", total=1)
+            # TODO: (placeholder) Copier / lier les certificats générés
+            time.sleep(1)
+
+            progress.update_subtask(cert_subtask, new_prefix="(1/1) Certificates applied successfully!")
+            progress.remove_subtask(cert_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 7 : Lancement du service Wazuh (systemd ou sysv)
+            # ----------------------------------------------------------------------------
+            # On avance la barre principale (8/10).
+            progress.update_main(new_prefix="Starting Wazuh indexer service...")
+
+            service_subtask = progress.add_subtask("(1/1) Starting service...", total=1)
+            # TODO: (placeholder) systemctl enable wazuh-indexer && systemctl start wazuh-indexer
+            time.sleep(1)
+
+            progress.update_subtask(service_subtask, new_prefix="(1/1) Service started!")
+            progress.remove_subtask(service_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 8 : Initialisation du cluster
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Initializing Wazuh cluster...")
+
+            init_subtask = progress.add_subtask("(1/1) Launching indexer-security-init.sh...", total=1)
+            # TODO: (placeholder) /usr/share/wazuh-indexer/bin/indexer-security-init.sh
+            time.sleep(1)
+
+            progress.update_subtask(init_subtask, new_prefix="(1/1) Cluster initialized!")
+            progress.remove_subtask(init_subtask)
+
+
+            # ----------------------------------------------------------------------------
+            # Étape 9 : Health-check (vérification)
+            # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Performing final health check...")
+            # TODO: healtcheck verif avec curl -k -u admin:admin https://<WAZUH_INDEXER_IP_ADRESS>:9200
+            # TODO: curl -k -u admin:admin https://<WAZUH_INDEXER_IP_ADDRESS>:9200/_cat/nodes?v
+
+            health_subtask = progress.add_subtask("(1/1) Checking cluster health...", total=1)
+            time.sleep(1)
+            progress.update_subtask(health_subtask, new_prefix="(1/1) Health check done!")
+            progress.remove_subtask(health_subtask)
+
+
+            progress.update_main(new_prefix="Installation completed!")
+
+            """
+            if self.host.package == "deb":
+                self.view.display("Debian based system",context="debug",indent=2,level=4)
+                # try apt from /usr/bin/apt ...
+
+            elif self.host.package == "rpm":
+                # d'abord yum, sinon dnf, sinon zypper
+                self.view.display("Redhat based system",context="debug",indent=2,level=4)
+
+
+            else :
+                self.view.display("Unknown package manager",context="debug",indent=2,level=4)
+                exit(1)
+            """
 
             # self.host -> quel os,version,.. ?
+            #self.model.get_component_by_name( self.component_name)
+
+
             # est ce que c'est compatible
             # non -> fatal
             # bof -> on demande confirmation/on essaye

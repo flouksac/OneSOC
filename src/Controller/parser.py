@@ -46,10 +46,11 @@ class Parser:
         group_positional_arguments.add_argument('config_path', type=str,
                                                 default=os.path.join(os.path.dirname(__file__), "./../../config.yaml"),
                                                 nargs='?', help="configuration file path (default: %(default)s)")
+
         group_options = parser.add_argument_group(colored("Options", "cyan"))
         group_options.add_argument('-h', '--help', action='help', help="Show this help message and exit")
-        group_options.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2, 3, 4], default=2, required=False,
-                                   help="verbosity level (default: %(default)s)", metavar='Int')
+        group_options.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2, 3, 4], default=2,
+                                   required=False, help="verbosity level (default: %(default)s)", metavar='Int')
 
         # List possibility
         group_list = parser.add_argument_group(colored("Listing flags", "cyan"))
@@ -66,7 +67,8 @@ class Parser:
         group_read = parser.add_argument_group(colored("Read-only flags", "cyan"))
         group_read.add_argument('--info', nargs='*', metavar='\"COMPONENT\"',
                                 help="Informations sur les composants installés")
-        group_read.add_argument('--healthcheck', nargs='*', metavar='COMPONENT', help="Vérifie la santé des composants")
+        group_read.add_argument('--healthcheck', nargs='*', metavar='COMPONENT',
+                                help="Vérifie la santé des composants")
 
         # Action Installation
         group_install = parser.add_argument_group(colored("Installation flags", "cyan"))
@@ -140,7 +142,8 @@ class Parser:
 
 
     def parse_manually(self):
-        self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0, color="bright_cyan")
+        self.view.display("As no arguments has been passed, here is the manual menu :\n", level=0,
+                          color="bright_cyan")
 
         host_controller = HostController()
         all_components = self.model.get_all_components()
@@ -151,14 +154,17 @@ class Parser:
                 try:
                     if host_controller.is_fully_compatible(platform):
                         mapping_component_and_supported_version[component] = ["fully_compatible",platform]
-                        self.view.display(f"{component.name} is fully compatible with {platform}",level=4,context="Debug",color="bright_green")
+                        self.view.display(f"{component.name} is fully compatible with {platform}",level=3,
+                                          context="Debug",color="bright_green")
                         break
                     elif host_controller.is_minimum_compatible(platform):
                         mapping_component_and_supported_version[component] = ["minimum_compatible", platform]
-                        self.view.display(f"{component.name} as the minimum compatibility with {platform}",level=4,context="Debug",color="yellow")
+                        self.view.display(f"{component.name} as the minimum compatibility with {platform}",
+                                          level=3,context="Debug",color="yellow")
 
                 except Exception as e:
-                    self.view.display(f"Finding compatibility on {component.name} with your os failed : {e} with {platform} ", level=4, context="Debug",color="red")
+                    self.view.display(f"Finding compatibility on {component.name} with your os failed : {e} " +
+                                      f"with {platform} ", level=4, context="Debug",color="red")
 
         possible_action = []
         for component in mapping_component_and_supported_version.keys():
@@ -182,7 +188,8 @@ class Parser:
             while len(chosen_components) == 0:
                 chosen_components = self.view.display_selector_multiple("With the action : " +
                                                                         colored(f"{action.name}","light_cyan")+
-                                                                        ",\nSelect the component that you need : ",allowed_names)
+                                                                        ",\nSelect the component that you need : ",
+                                                                        allowed_names)
 
             for component in [component for index,component in enumerate(supported_components) if index in chosen_components ]:
                 
@@ -194,25 +201,36 @@ class Parser:
 
                     for option in component.options:
                     
-                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default) : ",str(option.value), indent=2) or str(option.value)
+                        value = self.view.display_input(f"Enter a custom value for {option.key} (or keep default) : ",
+                                                        str(option.value), indent=2) or str(option.value)
+
                         self.view.display_with_type( value,2,color="bright_cyan",indent=2)
                         options[option.key] = value
 
-                    """
-                    self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2,indent=2)
-                    self.view.display_pretty_dict(options)
-                    """
+                    # self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2,indent=2)
+                    # self.view.display_pretty_dict(options)
+
                     self.view.display("")
-                    user_has_confirm = self.view.display_agree(f"Do you want to keep this configuration and run '"+
-                                                               colored(action.name,"light_cyan")+"' on '"+
-                                                               colored(component.name,"light_cyan")+"' with the current configuration ? ",True,indent=2)
+                    if mapping_component_and_supported_version[component][0] == "minimum_compatible":
+                        self.view.display("This component is not fully compatible with your system, "
+                                          "but it is the minimum required.",2,indent=2,context="warning")
+
+                    if mapping_component_and_supported_version[component][0] == "fully_compatible":
+                        self.view.display("This component fully compatible with your system, "
+                                          "but it is the minimum required.",3,indent=2,context="info")
+
+                    user_has_confirm = self.view.display_agree(f"Do you want to keep this configuration and run '" +
+                                                               colored(action.name,"light_cyan") + "' on '" +
+                                                               colored(component.name,"light_cyan") +
+                                                               "' with the current configuration ? ",True,
+                                                               indent=2)
                     if not user_has_confirm:
                         self.view.display("Silent Aborting without causing any error",0,context="Fatal")
                         exit(1)
 
                 #self.view.display_wait(f"\nRunning the action '"+colored(action.name,"light_cyan")+ "' on the component '"+
                 #                        colored(component.name,"light_cyan")+"' ")
-                self.view.display("\n  Please wait and do nothing while the action is not done.",2)
+                self.view.display("Please wait and do nothing while the action is not done.",2,indent=2)
 
                 try :
                     getattr(self.get_controller(component.name)(options),action.name.lower())()

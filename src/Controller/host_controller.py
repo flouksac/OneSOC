@@ -5,7 +5,7 @@ from Utils.hardware_info import get_ram_in_gb, get_free_disk_space_gb, get_cpu_c
 
 class HostController:
     def __init__(self):
-        self.host = None
+        self.host:Platform|None = None
         self.load_host()
 
     def load_host(self):
@@ -34,7 +34,7 @@ class HostController:
         }
         self.host = Platform(host_data)
 
-    def get_host(self):
+    def get_host(self)-> Platform :
         return self.host
     
 

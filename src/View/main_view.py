@@ -2,7 +2,8 @@
 import os
 import time
 import re
-from typing import Literal
+from datetime import datetime
+from typing import Literal, Optional, List
 
 # graphical module
 import survey as sv
@@ -81,10 +82,14 @@ class View(metaclass=Singleton):
 
         if self.verbosity >= level:
             if context and context.lower() == "debug":
-                self.console.log(
-                    f"{' ' * indent} [:robot: {context.upper()}] [{color if color else 'info'}]{message}[/{color if color else 'info'}]",
-                    highlight=False
+                now = datetime.now().strftime("[%H:%M:%S]")
+                full_message = (
+                    f"{' ' * indent}"  # indentation
+                    f"{now} "  # horodatage
+                    f"[:robot: {context.upper()}] "
+                    f"[{color if color else 'info'}]{message}[/{color if color else 'info'}]"
                 )
+                self.console.print(full_message, highlight=False,  )
                 return
 
             if context is None:
@@ -137,7 +142,7 @@ class View(metaclass=Singleton):
                         "[bright_blue] )\\())             (      (()/(   )\\())     )\\  [/bright_blue]",
                         "[cyan]((_\\     (        ))\\      /(_)) ((_)\\    (((_) [/cyan]",
                         "[cyan]  (([/cyan][white]_[/white][cyan])    )\\ )   /((_)    ([/cyan][white]_[/white][cyan]))     (([/cyan][white]_[/white][cyan])   )\\\[/cyan][white]___[/white][cyan]\\ [/cyan]",
-                        "[white] / _ \\   _[/white][bright_cyan](_/(  (_))      [/bright_cyan][white]/ __|   / _ \\  [/white][bright_cyan](([/bright_cyan][white]/ __|[/white]",
+                        "[white] / _ \\   _[/white][bright_cyan]([/bright_cyan][white]_[/white][bright_cyan]/(  ([/bright_cyan][white]_[/white][bright_cyan]))      [/bright_cyan][white]/ __|   / _ \\  [/white][bright_cyan](([/bright_cyan][white]/ __|[/white]",
                         "[white]| (_) | | ' \\\[/white][bright_cyan]))[/bright_cyan][white] / -_)  -  \\__ \\  | (_) |  | (__ [/white]",
                         "[white] \\___/  |_||_|  \\___|     |___/   \\___/    \\___|[/white]",
                         "[cyan]\n------------------ [/cyan][white]By OnlySOC[/white][cyan] ------------------\n[/cyan]",
@@ -327,65 +332,95 @@ class View(metaclass=Singleton):
     def display_agree(prompt: str, default=True,indent=0) -> bool:
         return sv.routines.inquire(" "*indent+prompt, default=default, mark="")
 
-    def display_progress(self,indent=0, total_size: int = 100):
+    def display_progress(self, main_task_prefix: str, indent: int = 0, total_size: int = 100):
         """
-        Retourne un context manager Rich pour gérer les tâches principales et secondaires.
+        Retourne un context manager Rich pour gérer les tâches principales et secondaires,
+        en plaçant l'indentation avant le SpinnerColumn.
         """
 
-        class ProgressWrapper:
-            def __init__(wself,total_size):
-                wself.progress = None
-                wself.main_task_id = None
-                wself.sub_tasks = {}  # {ID numérique: task_id}
-                wself.total_size = total_size
+        class ProgressBarManager:
+            def __init__(p_self):
+                # On crée une console Rich
+                p_self.console = self.console
 
-            def __enter__(wself):
-                wself.progress = Progress(
-                    SpinnerColumn(),
-                    TextColumn("[cyan]{task.description}[/cyan]"),
-                    BarColumn(),
-                    "[progress.percentage]{task.percentage:>3.0f}%",
+                # On ajoute une colonne de texte pour l'indentation, puis le spinner, etc.
+                p_self.progress = Progress(
+                    TextColumn(" " * indent),  # <-- Colonne d'indentation (vide ou contenant X espaces)
+                    #SpinnerColumn(spinner_name="balloon2",style = "bold white"),  # Spinner
+                    "[cyan]{task.description}[/cyan] |",  # Description
+                    BarColumn(bar_width=40,complete_style="cyan",finished_style="bright_cyan",),  # Barre de progression
+                    "[progress.percentage][bold white]{task.percentage:>3.0f}% [/bold white]|",
                     TimeElapsedColumn(),
                     TimeRemainingColumn(),
-                    console=self.console,
-                    transient=False,
-                )
-                wself.progress.start()
-                wself.main_task_id = wself.progress.add_task("Main Task", total=wself.total_size)
-                return wself
-
-            def update_main_task(wself, advance=0, description=None):
-                """Met à jour la tâche principale."""
-                wself.progress.update(
-                    wself.main_task_id, advance=advance, description=description
+                    console=p_self.console,
+                    transient=False
                 )
 
-            def add_sub_task(wself, sub_id: int, description: str, total_sub=50):
-                """Crée une barre secondaire identifiée par un ID numérique."""
-                task_id = wself.progress.add_task(description, total=total_sub)
-                wself.sub_tasks[sub_id] = task_id
+                p_self.main_prefix = main_task_prefix
+                p_self.main_total = total_size
+                p_self.main_task_id: Optional[int] = None
+                p_self.subtasks: List[int] = []
 
-            def update_sub_task(wself, sub_id: int, advance=0, description=None):
-                """
-                Met à jour une barre secondaire par son ID numérique.
-                Si la barre atteint son objectif, elle est automatiquement masquée.
-                """
-                task_id = wself.sub_tasks.get(sub_id)
-                if task_id is not None:
-                    wself.progress.update(task_id, advance=advance, description=description)
-                    task = wself.progress.tasks[task_id]
-                    if task.completed >= task.total:
-                        wself.progress.update(task_id, visible=False)
-                        wself.sub_tasks.pop(sub_id)
+            def __enter__(p_self):
+                # On démarre l'affichage de la barre
+                p_self.progress.start()
+                # On crée la tâche principale et on stocke son ID
+                p_self.main_task_id = p_self.progress.add_task(
+                    p_self.main_prefix,
+                    total=p_self.main_total
+                )
+                return p_self
 
-            def remove_main_task(wself):
-                """Masque la barre principale une fois terminée."""
-                wself.progress.update(wself.main_task_id, visible=False)
+            def __exit__(p_self, exc_type, exc_val, exc_tb):
+                # On arrête proprement la barre de progression
+                p_self.progress.stop()
 
-            def __exit__(wself, exc_type, exc_value, traceback):
-                wself.progress.stop()
+            # --- Méthodes pour la barre principale ---
 
-        return ProgressWrapper(total_size)
+            def update_main(
+                    p_self,
+                    advance: float = 1.0,
+                    new_prefix: Optional[str] = None
+            ) -> None:
+                if p_self.main_task_id is None:
+                    return
+
+                if new_prefix:
+                    p_self.progress.update(
+                        p_self.main_task_id,
+                        description=new_prefix
+                    )
+                p_self.progress.advance(p_self.main_task_id, advance=advance)
+
+            # --- Méthodes pour les sous-tâches ---
+
+            def add_subtask(
+                    p_self,
+                    prefix: str = "Subtask",
+                    total: float = 100.0
+            ) -> int:
+                subtask_id = p_self.progress.add_task(prefix, total=total)
+                p_self.subtasks.append(subtask_id)
+                return subtask_id
+
+            def update_subtask(
+                    p_self,
+                    subtask_id: int,
+                    advance: float = 1.0,
+                    new_prefix: Optional[str] = None
+            ) -> None:
+                if new_prefix:
+                    p_self.progress.update(subtask_id, description=new_prefix)
+                p_self.progress.advance(subtask_id, advance=advance)
+
+            def remove_subtask(p_self, subtask_id: int) -> None:
+                time.sleep(1)
+                p_self.progress.remove_task(subtask_id)
+                p_self.subtasks.remove(subtask_id)
+
+        # On retourne l'instance du gestionnaire
+        return ProgressBarManager()
+
 
     # Easter Egg
     @staticmethod
