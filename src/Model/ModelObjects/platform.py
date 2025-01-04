@@ -26,5 +26,15 @@ class Platform:
             else:
                 print(f"Clé inconnue ignorée : {key}")
             
+
     def __str__(self):
-        return f"Platform : {self.os_type} {self.version} {self.architecture} {self.package}"
+        details = [
+            #f"OS Type: {self.os_type or 'Unknown'}",
+            #f"OS Version: {self.os_type or 'Unknown'}",
+            f"{self.recommended_os or 'Unknown'} [",
+            f"Package Manager: {self.package or 'Unknown'} ,",
+            f"Architecture: {self.architecture or 'Unknown'}] ",
+            #f"Admin Rights: {'Yes' if self.admin_rights_needed else 'No'}",
+
+        ]
+        return "".join(details)

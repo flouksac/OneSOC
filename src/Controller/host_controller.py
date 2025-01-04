@@ -49,20 +49,21 @@ class HostController:
         
         
         if platform.minimum_ram is not None and platform.minimum_ram > self.host.minimum_ram:
-            raise Exception("YOU NEED MORE RAM, GO TO SHOP")
+            raise Exception("YOU NEED MORE RAM")
             
         if platform.minimum_cpu_core is not None and platform.minimum_cpu_core > self.host.minimum_cpu_core:
-            raise Exception("YOU NEED MORE CPU, GO TO SHOP")
-
+            raise Exception("YOU NEED MORE CPU")
 
         if platform.minimum_free_space is not None and platform.minimum_free_space > self.host.minimum_free_space:
-            raise Exception("YOU NEED MORE SPACE, BUY A NAS")
-        
+            raise Exception("YOU NEED MORE SPACE")
+
+        if self.host.os_type.lower() not in platform.os_type.lower():
+            raise Exception("Your os type is not the same")
+
         if platform.architecture !="None" and self.host.architecture.lower() not in platform.architecture.lower():
             raise Exception("The architecture of the CPU is not compatible")
         
-        if self.host.os_type.lower() not in platform.os_type.lower():
-            raise Exception("Your os type is not supported")
+
 
 
         if platform.package is not None and self.host.package is not None:

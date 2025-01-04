@@ -30,8 +30,12 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         pass
 
     def install(self):
+        super().install()
+
         with self.view.display_progress(f"Installation initialization of {self.component_name}...", indent=1,
                                         total_size=10) as progress:
+
+
 
             # ----------------------------------------------------------------------------
             # Étape 0 : Installation of curl and tar grep + dependencies
@@ -41,11 +45,11 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_main(new_prefix="Installation of dependencies...")
             dependencies_subtask = progress.add_subtask("(1/3) Getting your host package manager...", 3)
 
-            if self.host.package is None:
+            if self.host.get_host().package is None:
                 self.view.display("No package manager found on this system", context="fatal", indent=2, level=0)
                 exit(1)
 
-            packages =  self.host.package  # package is a list
+            packages = self.host.get_host().package  # package is a list
 
             if "apt" in packages:
                 if which("apt"):

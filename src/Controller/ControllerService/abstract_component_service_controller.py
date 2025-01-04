@@ -17,10 +17,9 @@ class AbstractComponentServiceController(AbstractComponentController,ABC): # L'o
     def healthcheck(self):
         pass
 
-    @abstractmethod
     def install(self):
-        # barre de progression
-        pass
+        super().install()
+
 
     @abstractmethod
     def config(self):

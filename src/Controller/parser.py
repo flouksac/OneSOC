@@ -149,22 +149,25 @@ class Parser:
         all_components = self.model.get_all_components()
 
         mapping_component_and_supported_version = {}
+        self.view.display("Checking compatibility with your system to determine which component you can work with",level=3,context="info")
+        self.view.display(f"Your system is interpreted as {host_controller.get_host()}: ",level=3,context="info")
+
         for component in all_components:
+            self.view.display(f"Checking compatibility for {component.name} with your system",level=3,context="info")
             for platform in component.supported_platform:
                 try:
                     if host_controller.is_fully_compatible(platform):
                         mapping_component_and_supported_version[component] = ["fully_compatible",platform]
                         self.view.display(f"{component.name} is fully compatible with {platform}",level=3,
-                                          context="Debug",color="bright_green")
+                                          context="info",color="bright_green",indent=2)
                         break
                     elif host_controller.is_minimum_compatible(platform):
                         mapping_component_and_supported_version[component] = ["minimum_compatible", platform]
-                        self.view.display(f"{component.name} as the minimum compatibility with {platform}",
-                                          level=3,context="Debug",color="yellow")
+                        self.view.display(f"{component.name} as the minimum compatibility with system, interpreted as {platform}",
+                                          level=3,context="Debug",color="yellow",indent=2)
 
                 except Exception as e:
-                    self.view.display(f"Finding compatibility on {component.name} with your os failed : {e} " +
-                                      f"with {platform} ", level=4, context="Debug",color="red")
+                    self.view.display(f"Finding compatibility as {platform} failed : {e} ", level=4, context="Debug",color="red",indent=2)
 
         possible_action = []
         for component in mapping_component_and_supported_version.keys():
