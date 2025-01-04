@@ -65,7 +65,7 @@ class HostController:
             raise Exception("Your os type is not supported")
 
 
-        if  platform.package is not None and None and self.host.package is not None: # Suspected to be problematic
+        if platform.package is not None and self.host.package is not None:
             if not ((self.host.package == ["dnf","yum"] and platform.package == "rpm")
                     or (self.host.package == ["apt"] and platform.package == "deb")) :
                 raise Exception("A package manager is missing on your platform")

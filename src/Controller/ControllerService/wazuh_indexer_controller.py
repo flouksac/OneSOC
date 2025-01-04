@@ -73,7 +73,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if "apt" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "update"], check=True)
+                    subprocess.run(["sudo", package_path, "update"], check=True) # capture output !!!! do not want to print
                     subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
                                      "adduser", "procps", "gnupg", "apt-transport-https"], check=True)
                 except subprocess.CalledProcessError as e:
