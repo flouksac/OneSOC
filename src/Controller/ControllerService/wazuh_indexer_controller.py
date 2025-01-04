@@ -73,20 +73,22 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if "apt" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "update"], check=True) # capture output !!!! do not want to print
+                    subprocess.run(["sudo", package_path, "update"], check=True, shell=True, capture_output=True,text=True) # cwd
                     subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
-                                     "adduser", "procps", "gnupg", "apt-transport-https"], check=True)
+                                   "adduser", "procps", "gnupg", "apt-transport-https"], check=True, shell=True,text=True,
+                                   capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
-                    raise
+                    exit(1)
 
 
             elif "yum" in packages or "dnf" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
-                                   check=True)
+                                   check=True, shell=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
+                    exit(1)
 
             required_commands = ["curl", "tar", "grep"]
             for command in required_commands:
