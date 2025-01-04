@@ -45,17 +45,17 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 self.view.display("No package manager found on this system", context="fatal", indent=2, level=0)
                 exit(1)
 
-            package = str(self.host.package).lower()
+            packages =  self.host.package  # package is a list
 
-            if package in ["apt", "deb"]:
-                if which("apt-get"):
+            if "apt" in packages:
+                if which("apt"):
                     self.view.display("Debian based system", context="debug", indent=2, level=4)
-                    package_path = "/usr/bin/apt-get"
+                    package_path = "/usr/bin/apt"
                 else:
                     self.view.display("Apt not found", context="fatal", indent=2, level=0)
                     exit(1)
 
-            elif package in ["rpm", "dnf", "yum"]:
+            elif "yum" in packages or "dnf" in packages :
                 if which("dnf"):
                     self.view.display("Redhat based system", context="debug", indent=2, level=4)
                     package_path = "/usr/bin/dnf"
@@ -71,7 +71,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             progress.update_subtask(dependencies_subtask, new_prefix="(2/3) Installing dependencies..." )
 
-            if package in ["deb","apt"]:
+            if "apt" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "update"], check=True)
                     subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
@@ -80,7 +80,8 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
                     raise
 
-            elif package in ["rpm","dnf","yum"]:
+
+            elif "yum" in packages or "dnf" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
                                    check=True)
