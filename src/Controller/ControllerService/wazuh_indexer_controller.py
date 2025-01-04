@@ -1,4 +1,6 @@
+import subprocess
 import time
+from shutil import which
 from threading import Thread
 from time import sleep
 
@@ -31,22 +33,68 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         with self.view.display_progress(f"Installation initialization of {self.component_name}...", indent=1,
                                         total_size=10) as progress:
 
-
             # ----------------------------------------------------------------------------
             # Étape 0 : Installation of curl and tar grep + dependencies
             # ----------------------------------------------------------------------------
-            # TODO: (placeholder) Détecter le package manager (apt, yum, dnf, zypper, etc.)
-            # TODO: Installer curl, tar, grep, etc.
             # Sur rpm : coreutils
             # Sur deb : debconf, adduser, procps, gnupg, apt-transport-https, ...
             progress.update_main(new_prefix="Installation of dependencies...")
-            dependencies_subtask = progress.add_subtask("(1/2) Getting your host package manager...", 2)
-            time.sleep(1) # simulation ou placeholder d'une opération
+            dependencies_subtask = progress.add_subtask("(1/3) Getting your host package manager...", 3)
 
-            progress.update_subtask(dependencies_subtask, new_prefix="(2/2) Installing dependencies..." )
-            time.sleep(1)
+            if self.host.package is None:
+                self.view.display("No package manager found on this system", context="fatal", indent=2, level=0)
+                exit(1)
 
-            progress.update_subtask(dependencies_subtask, new_prefix="(2/2) Dependencies installed..." )
+            package = str(self.host.package).lower()
+
+            if package in ["apt", "deb"]:
+                if which("apt-get"):
+                    self.view.display("Debian based system", context="debug", indent=2, level=4)
+                    package_path = "/usr/bin/apt-get"
+                else:
+                    self.view.display("Apt not found", context="fatal", indent=2, level=0)
+                    exit(1)
+
+            elif package in ["rpm", "dnf", "yum"]:
+                if which("dnf"):
+                    self.view.display("Redhat based system", context="debug", indent=2, level=4)
+                    package_path = "/usr/bin/dnf"
+                elif which("yum"):
+                    self.view.display("Redhat based system", context="debug", indent=2, level=4)
+                    package_path = "/usr/bin/yum"
+                else:
+                    self.view.display("Dnf and Yum not found", context="fatal", indent=2, level=0)
+                    exit(1)
+            else:
+                self.view.display("Unknown package manager", context="fatal", indent=2, level=0)
+                exit(1)
+
+            progress.update_subtask(dependencies_subtask, new_prefix="(2/3) Installing dependencies..." )
+
+            if package in ["deb","apt"]:
+                try:
+                    subprocess.run(["sudo", package_path, "update"], check=True)
+                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
+                                     "adduser", "procps", "gnupg", "apt-transport-https"], check=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
+                    raise
+
+            elif package in ["rpm","dnf","yum"]:
+                try:
+                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
+                                   check=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
+
+            required_commands = ["curl", "tar", "grep"]
+            for command in required_commands:
+                if not which(command):
+                    self.view.display(f"Dependency {command} is missing after installation", context="fatal", indent=2,
+                                      level=0)
+                    exit(1)
+
+            progress.update_subtask(dependencies_subtask, new_prefix="(3/3) Dependencies installed successfully." )
             progress.remove_subtask(dependencies_subtask)
 
 
