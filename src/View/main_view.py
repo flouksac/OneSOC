@@ -85,8 +85,7 @@ class View(metaclass=Singleton):
                 now = datetime.now().strftime("[%H:%M:%S]")
                 full_message = (
                     f"{' ' * indent}"  # indentation
-                    f"{now} "  # horodatage
-                    f"[:robot: {context.upper()}] "
+                    f"[:robot: {context.upper()}] [cyan]{now}[/cyan] - "
                     f"[{color if color else 'info'}]{message}[/{color if color else 'info'}]"
                 )
                 self.console.print(full_message, highlight=False,  )
@@ -351,7 +350,7 @@ class View(metaclass=Singleton):
                     BarColumn(bar_width=40,complete_style="cyan",finished_style="bright_cyan",),  # Barre de progression
                     "[progress.percentage][bold white]{task.percentage:>3.0f}% [/bold white]|",
                     TimeElapsedColumn(),
-                    TimeRemainingColumn(),
+                    # TimeRemainingColumn(),
                     console=p_self.console,
                     transient=False
                 )
