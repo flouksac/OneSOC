@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration minimale de python
-python_minimal=3.11
+python_minimal=3.10
 python_minimal_maj=$(echo $python_minimal | cut -d. -f1)
 python_minimal_min=$(echo $python_minimal | cut -d. -f2)
 
@@ -104,6 +104,9 @@ install_python() {
     # Vérification de l'outil de gestion de paquets et exécution des commandes appropriées
     if command -v apt-get &> /dev/null; then
         echo "Utilisation de apt pour installer python..."
+        apt-get install -y software-properties-common build-essential libffi-dev libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev libffi-dev libssl-dev &> /dev/null || handle_error "Problème lors de l'installation des dépendances pour python $python_default avec apt."
+        add-apt-repository ppa:deadsnakes/ppa
+        apt-get update
         apt-get install python$python_default -y &> /dev/null || handle_error "Problème lors de l'installation de python $python_default avec apt."
         handle_success "Installation de python terminée."
     elif command -v yum &> /dev/null; then
