@@ -3,7 +3,9 @@
 Deploy a SOC in one go, "one shot" style.
 
 > **⚠️ OneSOC is at a very early stage of development. Expect incomplete functionality and potential bugs. ⚠️**
+
 ---
+
 ## Project Overview
 
 The goal of this project is to create a unified framework installation program that provides flexibility in deploying all components of a SOC (Security Operations Center).
@@ -53,7 +55,9 @@ but when it's feasible we will use containers or have both options.
 
 The script is written in Python because it is a versatile language that is easy to read and write, cross-platform, 
 and will allow us to keep the codebase clean, short, and maintainable.
+
 ---
+
 ## Run OneSOC
 
 ### ⚠️ Disclaimer ⚠️
