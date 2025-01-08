@@ -4,6 +4,7 @@ import os
 
 from Controller.host_controller import HostController
 from Controller.list_controller import ListController
+from Model.ModelObjects.option import Option
 from View.main_view import View,colored
 from Model.main_model import Model
 
@@ -104,7 +105,17 @@ class Parser:
         if self.args.list_option is not None:
             list_controller.get_options(self.args.list_option)
   
-            
+    @staticmethod
+    def parse_option(options):
+        if not options:
+            return []
+
+        instanced_options = []
+        for option in options:
+            key, value = option.split("=")
+            instanced_options.append( Option(key, value))
+        return instanced_options
+
     def parse_action(self):
         if self.args.info is not None:
             targets = [comp.name for comp in self.model.get_all_components()] if len(
@@ -124,7 +135,7 @@ class Parser:
                 exit(1)
             else:
                 for i in range(len(self.args.install)): # in the controller install, we have to pick the options we need
-                    self.get_controller(self.args.install[i])(self.args.install_option).install()
+                    self.get_controller(self.args.install[i])(self.parse_option(self.args.install_option)).install()
 
         if self.args.config is not None:
             if not self.args.config:
@@ -132,7 +143,7 @@ class Parser:
                 exit(1)
             else:
                 for i in range(len(self.args.config)): # in the controller install, we have to pick the options we need
-                    self.get_controller(self.args.config[i])(self.args.config_option).config()
+                    self.get_controller(self.args.config[i])(self.parse_option(self.args.config_option)).config()
 
         if self.args.repair is not None:
             targets = [comp.name for comp in self.model.get_all_components()] if len(
@@ -196,7 +207,7 @@ class Parser:
 
             for component in [component for index,component in enumerate(supported_components) if index in chosen_components ]:
                 
-                options = {}
+                options = []
                 if action.name.lower() in ["install","config"]:
                     self.view.display("")
                     self.view.display_wait("You will have to configure the [bright_cyan]"+component.name+"[/bright_cyan] component ")
@@ -208,7 +219,7 @@ class Parser:
                                                         str(option.value), indent=2) or str(option.value)
 
                         self.view.display_with_type( value,2,color="bright_cyan",indent=2)
-                        options[option.key] = value
+                        options.append(Option(option.key,value))
 
                     # self.view.display(f"\nThis is the configuration you have chosen for {component.name} : ",2,indent=2)
                     # self.view.display_pretty_dict(options)

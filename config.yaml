@@ -95,10 +95,30 @@ Components:
         MacOs: None
 
     
-    options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
-      wazuh-indexer-ip: "127.0.0.1" # <- change this
-      wazuh-indexer-port: 1515
-
+    options: # THIS IS THE ONLY PART THE USER SHOULD CUSTOMIZE
+      wazuh-indexer-version: 4.9
+      # Theses steps are important for the configuration and certificate deployment
+      # more about here : https://documentation.wazuh.com/current/installation-guide/wazuh-indexer/step-by-step.html
+      wazuh-indexer-name: "wazuh-indexer-1"        # <- change this
+      wazuh-indexer-ip: "127.0.0.1"               # <- change this
+      # in case you have a cluster installation, uncomment the following lines
+      # wazuh-indexer-name-2: "wazuh-indexer-2"      # <- change this
+      # wazuh-indexer-ip-2: "127.0.0.2"             # <- change this
+      # wazuh-indexer-name-3: "wazuh-indexer-3"    # <- change this
+      # wazuh-indexer-ip-3: "127.0.0.3"           # <- change this
+      # even if you are at the stage of the indexer installation, please set the following values
+      wazuh-server-name: "wazuh-server-master"      # <- change this
+      wazuh-server-ip: "127.0.1.1"                 # <- change this
+      wazuh-server-node-type: "master"
+      # in case you will have a cluster installation for wazuh server, uncomment the following lines
+      # wazuh-server-name-2: "wazuh-server-worker-1"  # <- change this
+      # wazuh-server-ip-2: "127.0.1.2"               # <- change this
+      # wazuh-server-node-type-2: "worker"
+      # wazuh-server-name-3: "wazuh-server-worker-2"  # <- change this
+      # wazuh-server-ip-3: "127.0.1.2"               # <- change this
+      # wazuh-server-node-type-3: "worker"
+      wazuh-dashboard-name: "wazuh-dashboard"       # <- change this
+      wazuh-dashboard-ip: "127.0.2.1"              # <- change this
 
   Wazuh-Server:
     type: service

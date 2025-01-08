@@ -69,3 +69,9 @@ class Component:
                         platforms.append(Platform(platform_data))
         
         return platforms
+
+    def is_option_supported(self, option):
+        for supported_option in self.options:
+            if supported_option.key == option.key.lower():
+                return True
+        return False

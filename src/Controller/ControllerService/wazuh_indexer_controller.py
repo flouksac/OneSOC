@@ -1,11 +1,15 @@
+import os
 import subprocess
 import time
 from shutil import which
 from threading import Thread
 from time import sleep
 
-from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
+import requests
+import yaml
 
+from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
+from Model.loaderYAML import YamlLoader
 
 
 class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre est important
@@ -35,13 +39,12 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         with self.view.display_progress(f"Installation initialization of {self.component_name}...", indent=1,
                                         total_size=10) as progress:
 
-
-
             # ----------------------------------------------------------------------------
             # Étape 0 : Installation of curl and tar grep + dependencies
             # ----------------------------------------------------------------------------
             # Sur rpm : coreutils
             # Sur deb : debconf, adduser, procps, gnupg, apt-transport-https, ...
+
             progress.update_main(new_prefix="Installation of dependencies...")
             dependencies_subtask = progress.add_subtask("(1/3) Getting your host package manager...", 3)
 
@@ -103,38 +106,101 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(dependencies_subtask, new_prefix="(3/3) Dependencies installed successfully." )
             progress.remove_subtask(dependencies_subtask)
 
-
             # ----------------------------------------------------------------------------
-            # Étape 1 : Récupérer certs tools (selon last version), récupérer config.yml,
+            # Étape 1 : récupérer config.yml,
             #           selon nos parametres (avoir un dict dans le fichier yaml)
             # ----------------------------------------------------------------------------
-            # TODO: (placeholder) Télécharger / copier config.yml
-            # TODO: Mettre à jour config.yml selon paramétrage (dict)
-            progress.update_main(new_prefix="Installation of wazuh certifications tools...")
-            wazuh_tools_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools...", 7)
-            time.sleep(1)
+            # TODO definir ou stocker config.yml
+            progress.update_main(new_prefix="Adjusting wazuh's config.yml file from the provided settings...")
+            wazuh_tools_subtask = progress.add_subtask("(1/3) Getting Wazuh config.yml file...", 3)
 
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(2/7) Retrieving certs tools..." )
-            time.sleep(1)
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(3/7) Certs tools retrieved..." )
-            time.sleep(1)
+            url = f"https://packages.wazuh.com/{self._get_option('version',True).value}/config.yml"
+            response = requests.get(url, stream=True)
+            config_path = "/tmp/config.yml"
 
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(4/7) Retrieving config.yml..." )
-            time.sleep(1)
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(5/7) config.yml retrieved..." )
-            time.sleep(1)
+            if response.status_code == 200:
+                with open(config_path, 'wb') as f:
+                    f.write(response.content)
+            else:
+                self.view.display(f"Error: Couldn't retrieve config.yml file, status code : {response.status_code}",
+                                  context="fatal", indent=2, level=0)
+                exit(1)
 
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(6/7) Configuring config.yml..." )
-            time.sleep(1)
-            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(7/7) config.yml retrieved..." )
+
+            progress.update_subtask(  wazuh_tools_subtask, new_prefix="(2/3) Configuring config.yml..." )
+
+            try :
+                loader = YamlLoader(config_path)
+                config:dict = loader.data
+            except yaml.YAMLError as e:
+                self.view.display(f"Error: Couldn't parse config.yml file, {e}", context="fatal", indent=2, level=0)
+                if os.path.exists(config_path):
+                    os.remove(config_path)
+                exit(1)
+            except FileNotFoundError as e:
+                self.view.display(f"Error: Couldn't find config.yml file, {e}", context="fatal", indent=2, level=0)
+                exit(1)
+
+            indexer_nodes = [{
+                "name": self._get_option("wazuh-indexer-name").value,
+                "ip": self._get_option("wazuh-indexer-ip").value
+            }]
+
+            node_index = 2
+            while any(f"wazuh-indexer-name-{node_index}" in option.key for option in self.options):
+                indexer_nodes.append({
+                    "name": self._get_option(f"wazuh-indexer-name-{node_index}").value,
+                    "ip": '"'+self._get_option(f"wazuh-indexer-ip-{node_index}").value+'"',
+                })
+                node_index += 1
+
+            config["nodes"]["indexer"] = indexer_nodes
+
+            # Update server nodes
+            server_nodes = [{
+                "name": self._get_option("wazuh-server-name").value,
+                "ip": self._get_option("wazuh-server-ip").value,
+                "node_type": self._get_option("wazuh-server-node-type").value
+            }]
+            node_index = 2
+
+            while any(f"wazuh-server-name-{node_index}" in option.key for option in self.options):
+                server_nodes.append({
+                    "name": self._get_option(f"wazuh-server-name-{node_index}").value,
+                    "ip": self._get_option(f"wazuh-server-ip-{node_index}").value,
+                    "node_type": self._get_option(f"wazuh-server-node-type-{node_index}").value
+                })
+                node_index += 1
+
+            config["nodes"]["server"] = server_nodes
+
+            # Update dashboard nodes
+            config["nodes"]["dashboard"] = [{
+                "name": self._get_option("wazuh-dashboard-name").value,
+                "ip": self._get_option("wazuh-dashboard-ip").value
+            }]
+
+            self.view.display("Config.yml file updated with the provided settings : ", context="Info", indent=2, level=3)
+            self.view.display_pretty_dict(config,level=3,indent=2)
+
+            loader.save(config)
+
+            progress.update_subtask(wazuh_tools_subtask, new_prefix="(3/3) Adjustment on config.yml is done." )
             progress.remove_subtask(wazuh_tools_subtask)
 
 
             # ----------------------------------------------------------------------------
-            # Étape 2 : Création des certificats
+            # Étape 2 : Récupérer certs tools (selon last version), et Création des certificats
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Generating certificates...")
-            certificates_subtask = progress.add_subtask("(1/2) Generating certificates...", 2)
+            certificates_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools script...", 7)
+            time.sleep(1)
+
+            progress.update_subtask(  certificates_subtask, new_prefix="(2/7) Retrieving certs tools..." )
+            time.sleep(1)
+            progress.update_subtask(  certificates_subtask, new_prefix="(3/7) Certs tools retrieved..." )
+            time.sleep(1)
+
 
             # TODO: Générer les certificats avec Wazuh cert tools
             # TODO: dire de copier ces certificats !!!!!
