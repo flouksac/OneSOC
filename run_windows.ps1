@@ -1,7 +1,7 @@
 # PowerShell script for Windows
 
 # Configuration minimale de python
-$global:python_minimal=3.11
+$global:python_minimal=3.10
 $global:python_minimal_maj="$python_minimal".Split(".")[0]
 $global:python_minimal_min="$python_minimal".Split(".")[1]
 
@@ -88,7 +88,7 @@ function check_winget_installed {
 function install_python {
         # Téléchargement et installation depuis le site officiel de Python
         Write-Host "Installation de Python $python_default via téléchargement direct..."
-$pythonInstallerUrl="https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe"
+        $pythonInstallerUrl= "https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe"
         $tempInstallerPath = "$env:TEMP\python-installer.exe"
        
         # Télécharger le fichier d'installation
@@ -118,17 +118,17 @@ function ensure_python {
     # Vérifier si Python est installé et sa version
     $pythonInstalled = check_python_installed
     if(-not $pythonInstalled) {
-Write-Host "Installation de python $python_default..."
+        Write-Host "Installation de python $python_default..."
         install_python
         $global:pythonPath = (Get-Command py).Source
     } else {
-$pythonVersionOk = check_python_version
-if(-not $pythonVersionOk) {
-Write-Host "Mise à jour de python vers python $python_default..."
-        install_python
-        $global:pythonPath = (Get-Command py).Source
-} else {
-$global:pythonPath = (Get-Command py).Source}
+        $pythonVersionOk = check_python_version
+        if(-not $pythonVersionOk) {
+W           rite-Host "Mise à jour de python vers python $python_default..."
+            install_python
+            $global:pythonPath = (Get-Command py).Source
+        } else {
+        $global:pythonPath = (Get-Command py).Source}
     }
 }
 
