@@ -450,11 +450,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             master_nodes = []
 
             for node in config["nodes"]["indexer"]:
-                if node["node_type"] == "master":
-                    master_nodes.append(node["name"])
-
-            if not master_nodes:
-                master_nodes.append(self._get_option("wazuh-indexer-name").value)
+                master_nodes.append(node["name"])
 
             opensearch_config["cluster.initial_master_nodes"] = master_nodes
 
