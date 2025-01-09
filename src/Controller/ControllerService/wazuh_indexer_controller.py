@@ -234,7 +234,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
 
             try :
-                if os.path.exists(f"{workdir}/wazuh-certificates.tar"):
+                if os.path.exists(f"{workdir}/wazuh-certificates"):
                     try :
                         subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
                     except subprocess.CalledProcessError as e:
