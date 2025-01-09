@@ -236,7 +236,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             try :
                 if os.path.exists(f"{workdir}/wazuh-certificates.tar"):
                     try :
-                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates.tar"], check=True, capture_output=True, text=True,cwd=workdir)
+                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
                     except subprocess.CalledProcessError as e:
                         self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
                         exit(1)
