@@ -276,8 +276,12 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if "apt" in packages:
                 try:
-                    subprocess.run(["curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg"],
+                    subprocess.run(["curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | "
+                                    "sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg "
+                                    "--import"],
                                     check=True, capture_output=True,text=True)
+                    subprocess.run(["sudo", "chmod", "644", "/usr/share/keyrings/wazuh.gpg"],
+                                   check=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while installing the wazuh gpg key on debian based system: {e}",
                                       context="fatal", indent=2, level=0)
