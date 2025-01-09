@@ -70,7 +70,7 @@ class Component:
         
         return platforms
 
-    def is_option_supported(self, option):
+    def is_option_supported(self, option): # TODO in some case (when the option is commented on yml file) the option is not supported, but it should be
         for supported_option in self.options:
             if supported_option.key == option.key.lower():
                 return True

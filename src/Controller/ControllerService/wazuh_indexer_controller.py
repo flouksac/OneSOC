@@ -267,12 +267,85 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             #     -> Update the packages information.
             progress.update_main(new_prefix="Installation du repository Wazuh...")
             repo_subtask = progress.add_subtask("(1/3) Importing the GPG key...", total=3)
-            # TODO: (placeholder) Sur RPM : Import GPG key, add repo
-            #      Sur DEB : Install GPG key, add repo, apt-get update...
+            # TODO: Sur RPM : Import GPG key, add repo
+            #       Sur DEB : Install GPG key, add repo, apt-get update...
             time.sleep(1)
 
+
+            packages = self.host.get_host().package  # package is a list
+
+            if "apt" in packages:
+                try:
+                    subprocess.run(["curl", "-s", "https://packages.wazuh.com/key/GPG-KEY-WAZUH", "|", "gpg",
+                                    "--no-default-keyring", "--keyring", "gnupg-ring:/usr/share/keyrings/wazuh.gpg",
+                                    "--import", "&&", "chmod", "644", "/usr/share/keyrings/wazuh.gpg"],
+                                    check=True, capture_output=True,text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while installing the wazuh gpg key on debian based system: {e}",
+                                      context="fatal", indent=2, level=0)
+                    exit(1)
+
+
+            elif "yum" in packages or "dnf" in packages:
+                try:
+                    subprocess.run(["sudo", "rpm", "--import", "https://packages.wazuh.com/key/GPG-KEY-WAZUH"],
+                                   check=True, capture_output=True,text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while importing the wazuh gpg key on redhat based system: {e}",
+                                        context="fatal", indent=2, level=0)
+                    exit(1)
+
+
+
             progress.update_subtask(repo_subtask, new_prefix="(2/3) Adding the repository...")
-            time.sleep(1)
+
+            # verifier si dans les repo wazuh est déjà présent
+
+            if "apt" in packages:
+                try:
+                    result = subprocess.run(["grep", "-r", "packages.wazuh.com", "/etc/apt/sources.list.d/"],
+                                            check=True, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        self.view.display("The Wazuh repository is already configured on a Debian-based system.",
+                                          context="info", indent=2, level=0)
+                except subprocess.CalledProcessError:
+                    # Si le dépôt n'est pas trouvé, on l'ajoute
+                    try:
+                        subprocess.run(
+                            ["echo", f"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/{self._get_option('version',True)}/apt/ stable main",
+                             "|", "sudo", "tee", "-a", "/etc/apt/sources.list.d/wazuh.list"],
+                            check=True, capture_output=True, text=True)
+                        subprocess.run(["sudo", "/usr/bin/apt", "update"], check=True, capture_output=True, text=True)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while adding the wazuh repository on debian based system: {e}",
+                                          context="fatal", indent=2, level=0)
+                        exit(1)
+
+            elif "yum" in packages or "dnf" in packages:
+                try:
+                    result = subprocess.run(["grep", "-r", "packages.wazuh.com", "/etc/yum.repos.d/"],
+                                            check=True, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        self.view.display("The Wazuh repository is already configured on an RHEL-based system.",
+                                          context="info", indent=2, level=0)
+                except subprocess.CalledProcessError:
+                    # Si le dépôt n'est pas trouvé, on l'ajoute
+                    try:
+                        subprocess.run(
+                            ["echo", "-e",
+                             f"[wazuh]\\ngpgcheck=1\\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\\nenabled=1"
+                             f"\\nname=EL-$releasever - Wazuh\\nbaseurl=https://packages.wazuh.com/"
+                             f"{self._get_option('version',True)}/yum/\\nprotect=1",
+                             "|", "sudo", "tee", "/etc/yum.repos.d/wazuh.repo"],
+                            check=True, capture_output=True, text=True)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while adding the wazuh repository on redhat based system: {e}",
+                                          context="fatal", indent=2, level=0)
+                        exit(1)
+
+
+
+
 
             progress.update_subtask(repo_subtask, new_prefix="(3/3) Repository ready...")
             progress.remove_subtask(repo_subtask)
@@ -284,8 +357,28 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_main(new_prefix="Installing Wazuh indexer package...")
 
             install_subtask = progress.add_subtask("(1/1) Installing wazuh-indexer...", total=1)
-            # TODO: (placeholder) Démarrer le téléchargement / installation via package manager
-            time.sleep(1)
+
+            packages = self.host.get_host().package  # package is a list
+
+            if "apt" in packages:
+                try:
+                    subprocess.run(["sudo", "/usr/bin/apt", "install", "-y", "wazuh-indexer"],
+                                   check=True, capture_output=True, text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while installing the wazuh indexer on debian based system: {e}",
+                                      context="fatal", indent=2, level=0)
+                    exit(1)
+
+
+            elif "yum" in packages or "dnf" in packages:
+                try:
+                    subprocess.run(["sudo", package_path, "install", "-y", "wazuh-indexer"],
+                                   check=True, capture_output=True, text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while installing the wazuh indexer on redhat based system: {e}",
+                                      context="fatal", indent=2, level=0)
+                    exit(1)
+
 
             progress.update_subtask(install_subtask, new_prefix="(1/1) Wazuh indexer installed!")
             progress.remove_subtask(install_subtask)

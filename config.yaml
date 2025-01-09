@@ -111,14 +111,25 @@ Components:
       wazuh-server-ip: "127.0.1.1"                 # <- change this
       wazuh-server-node-type: "master"
       # in case you will have a cluster installation for wazuh server, uncomment the following lines
-      # wazuh-server-name-2: "wazuh-server-worker-1"  # <- change this
+      # wazuh-server-name-2: "wazuh-server-worker-2"  # <- change this
       # wazuh-server-ip-2: "127.0.1.2"               # <- change this
       # wazuh-server-node-type-2: "worker"
-      # wazuh-server-name-3: "wazuh-server-worker-2"  # <- change this
+      # wazuh-server-name-3: "wazuh-server-worker-3"  # <- change this
       # wazuh-server-ip-3: "127.0.1.2"               # <- change this
       # wazuh-server-node-type-3: "worker"
       wazuh-dashboard-name: "wazuh-dashboard"       # <- change this
       wazuh-dashboard-ip: "127.0.2.1"              # <- change this
+
+      # /etc/wazuh-indexer/opensearch.yml configuration
+      network.host: "127.0.0.1"
+      node.name: "wazuh-indexer-1"  # depends on the name you set above, it is the current node name, you want to install
+      # discovery.seed_hosts: ["10.0.0.1", "10.0.0.2", "10.0.03"] # List of the addresses of the master-eligible nodes
+      plugin.security.nodes_dn:
+        - "CN=wazuh-indexer-1,OU=Wazuh,O=Wazuh,L=California,C=US"
+        # - "CN=wazuh-indexer-2,OU=Wazuh,O=Wazuh,L=California,C=US"
+        # - "CN=wazuh-indexer-3,OU=Wazuh,O=Wazuh,L=California,C=US"
+
+
 
   Wazuh-Server:
     type: service
