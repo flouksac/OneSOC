@@ -218,7 +218,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(certificates_subtask, new_prefix="(3/4) Running wazuh-certs-tool.sh..." )
 
             try:
-                subprocess.run(["sudo", "/tmp/wazuh-certs-tool.sh"], check=True, capture_output=True, text=True)
+                subprocess.run(["sudo", f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as e:
                 self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
                 exit(1)
