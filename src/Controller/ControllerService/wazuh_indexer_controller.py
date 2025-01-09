@@ -1,3 +1,4 @@
+import glob
 import os
 import shutil
 import socket
@@ -512,7 +513,10 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
                 # 4) Secure permissions on the directory and files
                 subprocess.run(["sudo", "chmod", "500", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
-                subprocess.run(["sudo", "chmod", "400", "/etc/wazuh-indexer/certs/*"], check=True, capture_output=True, text=True)
+
+                files = glob.glob("/etc/wazuh-indexer/certs/*")  # expands to a list of all matching files
+
+                subprocess.run(["sudo", "chmod", "400", *files], check=True, capture_output=True, text=True)
 
                 # 5) Adjust ownership
                 subprocess.run(["sudo", "chown", "-R", "wazuh-indexer:wazuh-indexer", "/etc/wazuh-indexer/certs"],
