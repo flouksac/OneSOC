@@ -226,6 +226,13 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(certificates_subtask, new_prefix="(3/4) Running wazuh-certs-tool.sh..." )
 
             try:
+                if os.path.exists(f"{workdir}/wazuh-certificates/"):
+                    try :
+                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
+                        exit(1)
+
                 subprocess.run(["sudo", f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as e:
                 self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
@@ -234,13 +241,6 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
 
             try :
-                if os.path.isdir(f"{workdir}/wazuh-certificates/"):
-                    try :
-                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
-                    except subprocess.CalledProcessError as e:
-                        self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
-                        exit(1)
-
                 subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
                                check=True, capture_output=True, text=True,cwd=workdir)
                 subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
