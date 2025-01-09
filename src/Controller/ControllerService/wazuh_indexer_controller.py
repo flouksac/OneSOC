@@ -2,8 +2,7 @@ import os
 import subprocess
 import time
 from shutil import which
-from threading import Thread
-from time import sleep
+
 
 import requests
 import yaml
@@ -194,19 +193,51 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Generating certificates...")
             certificates_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools script...", 7)
-            time.sleep(1)
 
-            progress.update_subtask(  certificates_subtask, new_prefix="(2/7) Retrieving certs tools..." )
-            time.sleep(1)
-            progress.update_subtask(  certificates_subtask, new_prefix="(3/7) Certs tools retrieved..." )
-            time.sleep(1)
+            url = f"https://packages.wazuh.com/{self._get_option('version', True).value}/wazuh-certs-tool.sh"
+            response = requests.get(url, stream=True)
+            workdir = "/tmp"
+            config_path = "/tmp/wazuh-certs-tool.sh"
 
+            if response.status_code == 200:
+                with open(config_path, 'wb') as f:
+                    f.write(response.content)
+            else:
+                self.view.display(f"Error: Couldn't retrieve wazuh-certs-tools file, status code : {response.status_code}",
+                                  context="fatal", indent=2, level=0)
+                exit(1)
 
-            # TODO: Générer les certificats avec Wazuh cert tools
-            # TODO: dire de copier ces certificats !!!!!
-            time.sleep(1)
+            progress.update_subtask(  certificates_subtask, new_prefix="(2/4) Making wazuh-certs-tool.sh executable..." )
 
-            progress.update_subtask(certificates_subtask, new_prefix="(2/2)Certificates generated successfully..."  )
+            try:
+                subprocess.run(["sudo","/usr/bin/chmod", "+x", config_path], check=True, capture_output=True, text=True,cwd="/tmp")
+            except subprocess.CalledProcessError as e:
+                self.view.display(f"Error while adding execution right on wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
+                exit(1)
+
+            progress.update_subtask(certificates_subtask, new_prefix="(3/4) Running wazuh-certs-tool.sh..." )
+
+            try:
+                subprocess.run(["sudo", "/tmp/wazuh-certs-tool.sh"], check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as e:
+                self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
+                exit(1)
+
+            progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
+
+            try :
+                subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
+                               check=True, capture_output=True, text=True,cwd=workdir)
+                # subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+            except subprocess.CalledProcessError as e:
+                self.view.display(f"Error while compressing certificates: {e}", context="fatal", indent=2, level=0)
+                exit(1)
+
+            self.view.display(f"Certificates generated successfully!", context="Sucess", indent=2, level=0)
+            self.view.display(f"PLEASE COPY {workdir}/wazuh-certificates.tar to all the nodes, including the Wazuh indexer, "
+                              f"Wazuh server, and Wazuh dashboard nodes. "
+                              f"This can be done by using the scp utility", context="info", indent=2, level=0)
+
             progress.remove_subtask(certificates_subtask)
 
 

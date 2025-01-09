@@ -46,7 +46,6 @@ class Wazuh_Agent_Controller(AbstractComponentServiceController):  # L'odre est 
         # (config)
         #
         # renvoi un résumé
-        print(self.options)
         self.view.display("ZAZA", level=0)
 
         pass

@@ -23,8 +23,7 @@ class Platform:
         for key, value in values.items():
             if hasattr(self, key):  # Vérifie si l'attribut existe
                 setattr(self, key, value)
-            else:
-                print(f"Clé inconnue ignorée : {key}")
+
             
 
     def __str__(self):

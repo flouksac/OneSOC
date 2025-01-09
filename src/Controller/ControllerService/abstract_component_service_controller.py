@@ -9,9 +9,9 @@ class AbstractComponentServiceController(AbstractComponentController,ABC): # L'o
 
     def info(self):
         if find_service(self.component_name):
-            print(f"  {self.component_name} is on the device")
+            self.view.display(f"  {self.component_name} is on the device")
         else:
-            print(f"  {self.component_name} isn't on the device")
+            self.view.display(f"  {self.component_name} isn't on the device")
 
     @abstractmethod
     def healthcheck(self):
