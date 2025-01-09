@@ -329,7 +329,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 except subprocess.CalledProcessError:
                     # Si le dépôt n'est pas trouvé, on l'ajoute
                     try:
-                        repo_string = f"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/{self._get_option('version', True).value}/apt/ stable main\n"
+                        repo_string = f"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main\n"
 
                         # 2) Run 'tee' and pass `repo_string` as input
                         subprocess.run(
