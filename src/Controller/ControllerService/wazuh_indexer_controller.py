@@ -80,7 +80,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             if "apt" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "update"], check=True, capture_output=True,text=True) # cwd
-                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
+                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf", "tee",
                                    "adduser", "procps", "gnupg", "apt-transport-https"], check=True,text=True, capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
@@ -89,7 +89,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             elif "yum" in packages or "dnf" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
+                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "tee","grep"],
                                    check=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
@@ -329,10 +329,16 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 except subprocess.CalledProcessError:
                     # Si le dépôt n'est pas trouvé, on l'ajoute
                     try:
+                        repo_string = f"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/{self._get_option('version', True)}/apt/ stable main\n"
+
+                        # 2) Run 'tee' and pass `repo_string` as input
                         subprocess.run(
-                            ["echo", f"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/{self._get_option('version',True)}/apt/ stable main",
-                             "|", "sudo", "tee", "-a", "/etc/apt/sources.list.d/wazuh.list"],
-                            check=True, capture_output=True, text=True)
+                            ["sudo", "tee", "-a", "/etc/apt/sources.list.d/wazuh.list"],
+                            input=repo_string,
+                            text=True,
+                            check=True,
+                            capture_output=True
+                        )
                         subprocess.run(["sudo", "/usr/bin/apt", "update"], check=True, capture_output=True, text=True)
                     except subprocess.CalledProcessError as e:
                         self.view.display(f"Error while adding the wazuh repository on debian based system: {e}",
@@ -347,22 +353,32 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                         self.view.display("The Wazuh repository is already configured on an RHEL-based system.",
                                           context="info", indent=2, level=0)
                 except subprocess.CalledProcessError:
-                    # Si le dépôt n'est pas trouvé, on l'ajoute
+                    # If the repository is not found, add it
                     try:
+                        # Build the repository content as a single string
+                        repo_string = (
+                            "[wazuh]\n"
+                            "gpgcheck=1\n"
+                            "gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\n"
+                            "enabled=1\n"
+                            "name=EL-$releasever - Wazuh\n"
+                            f"baseurl=https://packages.wazuh.com/{self._get_option('version', True)}/yum/\n"
+                            "protect=1\n"
+                        )
+
+                        # Use 'tee' to write the content to /etc/yum.repos.d/wazuh.repo
                         subprocess.run(
-                            ["echo", "-e",
-                             f"[wazuh]\\ngpgcheck=1\\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\\nenabled=1"
-                             f"\\nname=EL-$releasever - Wazuh\\nbaseurl=https://packages.wazuh.com/"
-                             f"{self._get_option('version',True)}/yum/\\nprotect=1",
-                             "|", "sudo", "tee", "/etc/yum.repos.d/wazuh.repo"],
-                            check=True, capture_output=True, text=True)
+                            ["sudo", "tee", "/etc/yum.repos.d/wazuh.repo"],
+                            input=repo_string,
+                            text=True,
+                            check=True,
+                            capture_output=True
+                        )
+
                     except subprocess.CalledProcessError as e:
-                        self.view.display(f"Error while adding the wazuh repository on redhat based system: {e}",
+                        self.view.display(f"Error while adding the Wazuh repository on a RedHat-based system: {e}",
                                           context="fatal", indent=2, level=0)
                         exit(1)
-
-
-
 
 
             progress.update_subtask(repo_subtask, new_prefix="(3/3) Repository ready...")
