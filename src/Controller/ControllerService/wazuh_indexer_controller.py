@@ -156,11 +156,19 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             config["nodes"]["indexer"] = indexer_nodes
 
             # Update server nodes
-            server_nodes = [{
-                "name": self._get_option("wazuh-server-name").value,
-                "ip": self._get_option("wazuh-server-ip").value,
-                "node_type": self._get_option("wazuh-server-node-type").value
-            }]
+            if any ("wazuh-server-name-2" in option.key for option in self.options):
+
+                server_nodes = [{
+                    "name": self._get_option("wazuh-server-name").value,
+                    "ip": self._get_option("wazuh-server-ip").value,
+                    "node_type": self._get_option("wazuh-server-node-type").value
+                }]
+            else :
+                server_nodes = [{
+                    "name": self._get_option("wazuh-server-name").value,
+                    "ip": self._get_option("wazuh-server-ip").value,
+                }]
+
             node_index = 2
 
             while any(f"wazuh-server-name-{node_index}" in option.key for option in self.options):
