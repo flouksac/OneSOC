@@ -234,15 +234,22 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
 
             try :
+                if os.path.exists(f"{workdir}/wazuh-certificates.tar"):
+                    try :
+                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates.tar"], check=True, capture_output=True, text=True,cwd=workdir)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
+                        exit(1)
+
                 subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
                                check=True, capture_output=True, text=True,cwd=workdir)
-                # subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
             except subprocess.CalledProcessError as e:
                 self.view.display(f"Error while compressing certificates: {e}", context="fatal", indent=2, level=0)
                 exit(1)
 
-            self.view.display(f"Certificates generated successfully!", context="Sucess", indent=2, level=0)
-            self.view.display(f"PLEASE COPY {workdir}/wazuh-certificates.tar to all the nodes, including the Wazuh indexer, "
+            self.view.display(f"Certificates generated successfully!", context="Success", indent=2, level=0)
+            self.view.display(f"[bright_cyan]PLEASE COPY {workdir}/wazuh-certificates.tar[/bright_cyan] to all the nodes, including the Wazuh indexer, "
                               f"Wazuh server, and Wazuh dashboard nodes. "
                               f"This can be done by using the scp utility", context="info", indent=2, level=0)
 
