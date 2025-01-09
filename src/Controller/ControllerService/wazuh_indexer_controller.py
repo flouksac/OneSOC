@@ -452,13 +452,13 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 if node["name"] != node_name and node["node_type"] == "master":
                     master_nodes.append(node["name"])
 
-            if self._get_option("discovery.seed_hosts",True) : # -> none by default because it's not a cluster
+            if self._get_option("discovery.seed_hosts",) : # -> none by default because it's not a cluster
                 opensearch_config["discovery.seed_hosts"] = []
                 for node in config["nodes"]["indexer"]:
                     opensearch_config["discovery.seed_hosts"].append(node["ip"])
 
             opensearch_config["plugin.security.nodes_dn"] = []
-            for dn in self._get_option("plugin.security.nodes_dn:",True).value:
+            for dn in self._get_option("plugin.security.nodes_dn",).value:
                 opensearch_config["plugin.security.nodes_dn"].append(dn)
 
             loader.save(opensearch_config,False)
