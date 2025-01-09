@@ -484,7 +484,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             try:
                 # 1) Make sure /etc/wazuh-indexer/certs exists
-                subprocess.run(["sudo", "mkdir", "-p", "/etc/wazuh-indexer/certs"], check=True)
+                subprocess.run(["sudo", "mkdir", "-p", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
 
                 # 2) Extract only necessary certificates from the tar file
                 subprocess.run([
@@ -495,29 +495,28 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                     "./admin.pem",
                     "./admin-key.pem",
                     "./root-ca.pem"
-                ], check=True)
+                ], check=True, capture_output=True, text=True)
 
                 # 3) Rename the node’s PEM and KEY to indexer.pem and indexer-key.pem
                 subprocess.run([
                     "sudo", "mv", "-n",
                     f"/etc/wazuh-indexer/certs/{node_name}.pem",
                     "/etc/wazuh-indexer/certs/indexer.pem"
-                ], check=True)
+                ], check=True, capture_output=True, text=True)
 
                 subprocess.run([
                     "sudo", "mv", "-n",
                     f"/etc/wazuh-indexer/certs/{node_name}-key.pem",
                     "/etc/wazuh-indexer/certs/indexer-key.pem"
-                ], check=True)
+                ],check=True, capture_output=True, text=True)
 
                 # 4) Secure permissions on the directory and files
-                subprocess.run(["sudo", "chmod", "500", "/etc/wazuh-indexer/certs"], check=True)
-                # Using shell=True for wildcard expansion (*). Alternatively, loop over files in Python.
-                subprocess.run(["sudo", "chmod", "400", "/etc/wazuh-indexer/certs/*"], shell=True, check=True)
+                subprocess.run(["sudo", "chmod", "500", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
+                subprocess.run(["sudo", "chmod", "400", "/etc/wazuh-indexer/certs/*"], check=True, capture_output=True, text=True)
 
                 # 5) Adjust ownership
                 subprocess.run(["sudo", "chown", "-R", "wazuh-indexer:wazuh-indexer", "/etc/wazuh-indexer/certs"],
-                               check=True)
+                               check=True, capture_output=True, text=True)
 
             except subprocess.CalledProcessError as e:
                 self.view.display(
