@@ -452,7 +452,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 if node["name"] != node_name and node["node_type"] == "master":
                     master_nodes.append(node["name"])
 
-            if self._get_option("discovery.seed_hosts",True).value : # -> none by default because it's not a cluster
+            if self._get_option("discovery.seed_hosts",True) : # -> none by default because it's not a cluster
                 opensearch_config["discovery.seed_hosts"] = []
                 for node in config["nodes"]["indexer"]:
                     opensearch_config["discovery.seed_hosts"].append(node["ip"])
