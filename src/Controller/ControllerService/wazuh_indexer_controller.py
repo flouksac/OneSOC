@@ -80,7 +80,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             if "apt" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "update"], check=True, capture_output=True,text=True) # cwd
-                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf", "tee",
+                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
                                    "adduser", "procps", "gnupg", "apt-transport-https"], check=True,text=True, capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
@@ -89,7 +89,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             elif "yum" in packages or "dnf" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "tee","grep"],
+                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
                                    check=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
