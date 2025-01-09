@@ -126,7 +126,7 @@ Components:
 
       # /etc/wazuh-indexer/opensearch.yml configuration
 
-      plugin.security.nodes_dn:
+      plugins.security.nodes_dn:
         - "CN=wazuh-indexer-1,OU=Wazuh,O=Wazuh,L=California,C=US"
         # - "CN=wazuh-indexer-2,OU=Wazuh,O=Wazuh,L=California,C=US"
         # - "CN=wazuh-indexer-3,OU=Wazuh,O=Wazuh,L=California,C=US"

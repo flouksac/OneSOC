@@ -450,17 +450,24 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             master_nodes = []
 
             for node in config["nodes"]["indexer"]:
-                if node["name"] != node_name and node["node_type"] == "master":
+                if node["node_type"] == "master":
                     master_nodes.append(node["name"])
+
+            if not master_nodes:
+                master_nodes.append(self._get_option("wazuh-indexer-name").value)
+
+            opensearch_config["cluster.initial_master_nodes"] = master_nodes
+
 
             if self._get_option("discovery.seed_hosts",) : # -> none by default because it's not a cluster
                 opensearch_config["discovery.seed_hosts"] = []
                 for node in config["nodes"]["indexer"]:
                     opensearch_config["discovery.seed_hosts"].append(node["ip"])
 
-            opensearch_config["plugin.security.nodes_dn"] = []
-            for dn in self._get_option("plugin.security.nodes_dn",).value:
-                opensearch_config["plugin.security.nodes_dn"].append(dn)
+            opensearch_config["plugins.security.nodes_dn"] = []
+            for dn in self._get_option("plugins.security.nodes_dn",).value:
+                opensearch_config["plugins.security.nodes_dn"].append(dn)
+
 
             loader.save(opensearch_config,False)
 
@@ -572,7 +579,6 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             progress.update_subtask(service_subtask, new_prefix="(1/1) Service started!")
             progress.remove_subtask(service_subtask)
-
 
             # ----------------------------------------------------------------------------
             # Étape 8 : Initialisation du cluster
