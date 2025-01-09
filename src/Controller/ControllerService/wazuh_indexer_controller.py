@@ -1,4 +1,6 @@
 import os
+import shutil
+import socket
 import subprocess
 import time
 from shutil import which
@@ -199,62 +201,69 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             # ----------------------------------------------------------------------------
             # Étape 2 : Récupérer certs tools (selon last version), et Création des certificats
             # ----------------------------------------------------------------------------
-            progress.update_main(new_prefix="Generating certificates...")
-            certificates_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools script...", 7)
+            if self._get_option("node-name-you-are-currently-installing",True).value == self._get_option("wazuh-indexer-name").value:
 
-            url = f"https://packages.wazuh.com/{self._get_option('version', True).value}/wazuh-certs-tool.sh"
-            response = requests.get(url, stream=True)
-            workdir = "/tmp"
-            config_path = "/tmp/wazuh-certs-tool.sh"
+                progress.update_main(new_prefix="Generating certificates...")
+                certificates_subtask = progress.add_subtask("(1/7) Getting Wazuh certs tools script...", 7)
 
-            if response.status_code == 200:
-                with open(config_path, 'wb') as f:
-                    f.write(response.content)
-            else:
-                self.view.display(f"Error: Couldn't retrieve wazuh-certs-tools file, status code : {response.status_code}",
-                                  context="fatal", indent=2, level=0)
-                exit(1)
+                url = f"https://packages.wazuh.com/{self._get_option('version', True).value}/wazuh-certs-tool.sh"
+                response = requests.get(url, stream=True)
+                workdir = "/tmp"
+                config_path = "/tmp/wazuh-certs-tool.sh"
 
-            progress.update_subtask(  certificates_subtask, new_prefix="(2/4) Making wazuh-certs-tool.sh executable..." )
+                if response.status_code == 200:
+                    with open(config_path, 'wb') as f:
+                        f.write(response.content)
+                else:
+                    self.view.display(f"Error: Couldn't retrieve wazuh-certs-tools file, status code : {response.status_code}",
+                                      context="fatal", indent=2, level=0)
+                    exit(1)
 
-            try:
-                subprocess.run(["sudo","/usr/bin/chmod", "+x", config_path], check=True, capture_output=True, text=True,cwd="/tmp")
-            except subprocess.CalledProcessError as e:
-                self.view.display(f"Error while adding execution right on wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
-                exit(1)
+                progress.update_subtask(  certificates_subtask, new_prefix="(2/4) Making wazuh-certs-tool.sh executable..." )
 
-            progress.update_subtask(certificates_subtask, new_prefix="(3/4) Running wazuh-certs-tool.sh..." )
+                try:
+                    subprocess.run(["sudo","/usr/bin/chmod", "+x", config_path], check=True, capture_output=True, text=True,cwd="/tmp")
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while adding execution right on wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
+                    exit(1)
 
-            try:
-                if os.path.exists(f"{workdir}/wazuh-certificates/"):
-                    try :
-                        subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
-                    except subprocess.CalledProcessError as e:
-                        self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
-                        exit(1)
+                progress.update_subtask(certificates_subtask, new_prefix="(3/4) Running wazuh-certs-tool.sh..." )
 
-                subprocess.run(["sudo", f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
-            except subprocess.CalledProcessError as e:
-                self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
-                exit(1)
+                try:
+                    if os.path.exists(f"{workdir}/wazuh-certificates/"):
+                        try :
+                            subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                        except subprocess.CalledProcessError as e:
+                            self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
+                            exit(1)
 
-            progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
+                    subprocess.run(["sudo", f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
+                    exit(1)
 
-            try :
-                subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
-                               check=True, capture_output=True, text=True,cwd=workdir)
-                subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
-            except subprocess.CalledProcessError as e:
-                self.view.display(f"Error while compressing certificates: {e}", context="fatal", indent=2, level=0)
-                exit(1)
+                progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
 
-            self.view.display(f"Certificates generated successfully!", context="Success", indent=2, level=0)
-            self.view.display(f"[bright_cyan]PLEASE COPY {workdir}/wazuh-certificates.tar[/bright_cyan] to all the nodes, including the Wazuh indexer, "
-                              f"Wazuh server, and Wazuh dashboard nodes. "
-                              f"This can be done by using the scp utility", context="info", indent=2, level=0)
+                try :
+                    subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
+                                   check=True, capture_output=True, text=True,cwd=workdir)
+                    subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while compressing certificates: {e}", context="fatal", indent=2, level=0)
+                    exit(1)
 
-            progress.remove_subtask(certificates_subtask)
+                self.view.display(f"Certificates generated successfully!", context="Success", indent=2, level=0)
+                self.view.display(f"[bright_cyan]PLEASE COPY {workdir}/wazuh-certificates.tar[/bright_cyan] to all the nodes, including the Wazuh indexer, "
+                                  f"Wazuh server, and Wazuh dashboard nodes. "
+                                  f"This can be done by using the scp utility", context="info", indent=2, level=0)
 
+                progress.remove_subtask(certificates_subtask)
+
+            else :
+                self.view.display("Skip certificat generation because it's not the master indexer...", context="info", indent=2, level=0)
+                if self._get_option("certificates-path",True).value:
+                    self.view.display(f"Please copy the certificates generated by the master indexer to {self._get_option('certificates-path',True).value}", context="info", indent=2, level=0)
+                progress.update_main(new_prefix="Skip certificat generation...")
 
             # ----------------------------------------------------------------------------
             # Étape 3 : Installation du repository Wazuh
@@ -421,13 +430,40 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             # ----------------------------------------------------------------------------
             # Étape 5 : Configuration du Wazuh indexer
             # ----------------------------------------------------------------------------
-            progress.update_main(new_prefix="Configuring Wazuh indexer...")
+            progress.update_main(new_prefix="Configuring opensearch...")
 
-            config_subtask = progress.add_subtask("(1/1) Editing indexer configuration...", total=1)
+            config_subtask = progress.add_subtask("(1/1) Editing opensearch configuration...", total=1)
             # TODO: (placeholder) Éditer /etc/wazuh-indexer/opensearch.yml (ou autre fichier de config)
             time.sleep(1)
 
-            progress.update_subtask(config_subtask, new_prefix="(1/1) Wazuh indexer config updated!")
+
+            node_name = self._get_option("node-name-you-are-currently-installing",True).value
+            loader = YamlLoader("/etc/wazuh-indexer/opensearch.yml")
+            opensearch_config = loader.data
+
+            for node in config["nodes"]["indexer"]:
+                if node["name"] == node_name:
+                    opensearch_config["node.name"] = node["name"]
+                    opensearch_config["network.host"] = node["ip"]
+
+            master_nodes = []
+
+            for node in config["nodes"]["indexer"]:
+                if node["name"] != node_name and node["node_type"] == "master":
+                    master_nodes.append(node["name"])
+
+            if self._get_option("discovery.seed_hosts",True).value : # -> none by default because it's not a cluster
+                opensearch_config["discovery.seed_hosts"] = []
+                for node in config["nodes"]["indexer"]:
+                    opensearch_config["discovery.seed_hosts"].append(node["ip"])
+
+            opensearch_config["plugin.security.nodes_dn"] = []
+            for dn in self._get_option("plugin.security.nodes_dn:",True).value:
+                opensearch_config["plugin.security.nodes_dn"].append(dn)
+
+            loader.save(opensearch_config,False)
+
+            progress.update_subtask(config_subtask, new_prefix="(1/1) opensearch config updated!")
             progress.remove_subtask(config_subtask)
 
             # ----------------------------------------------------------------------------
@@ -436,8 +472,59 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_main(new_prefix="Applying certificates...")
 
             cert_subtask = progress.add_subtask("(1/1) Copying / applying certs...", total=1)
-            # TODO: (placeholder) Copier / lier les certificats générés
-            time.sleep(1)
+            certs_path = self._get_option("certificates-path",True).value
+
+
+            if not os.path.exists(certs_path):
+                self.view.display(f"Certificates not found at {self._get_option('certificates-path')}, Please copy the certificates generated by the master indexer to this node",
+                                  context="fatal", indent=2, level=0)
+                exit(1)
+
+            node_name = self._get_option("node-name-you-are-currently-installing",True).value
+
+            try:
+                # 1) Make sure /etc/wazuh-indexer/certs exists
+                subprocess.run(["sudo", "mkdir", "-p", "/etc/wazuh-indexer/certs"], check=True)
+
+                # 2) Extract only necessary certificates from the tar file
+                subprocess.run([
+                    "sudo", "tar", "-xf", certs_path,
+                    "-C", "/etc/wazuh-indexer/certs/",
+                    f"./{node_name}.pem",
+                    f"./{node_name}-key.pem",
+                    "./admin.pem",
+                    "./admin-key.pem",
+                    "./root-ca.pem"
+                ], check=True)
+
+                # 3) Rename the node’s PEM and KEY to indexer.pem and indexer-key.pem
+                subprocess.run([
+                    "sudo", "mv", "-n",
+                    f"/etc/wazuh-indexer/certs/{node_name}.pem",
+                    "/etc/wazuh-indexer/certs/indexer.pem"
+                ], check=True)
+
+                subprocess.run([
+                    "sudo", "mv", "-n",
+                    f"/etc/wazuh-indexer/certs/{node_name}-key.pem",
+                    "/etc/wazuh-indexer/certs/indexer-key.pem"
+                ], check=True)
+
+                # 4) Secure permissions on the directory and files
+                subprocess.run(["sudo", "chmod", "500", "/etc/wazuh-indexer/certs"], check=True)
+                # Using shell=True for wildcard expansion (*). Alternatively, loop over files in Python.
+                subprocess.run(["sudo", "chmod", "400", "/etc/wazuh-indexer/certs/*"], shell=True, check=True)
+
+                # 5) Adjust ownership
+                subprocess.run(["sudo", "chown", "-R", "wazuh-indexer:wazuh-indexer", "/etc/wazuh-indexer/certs"],
+                               check=True)
+
+            except subprocess.CalledProcessError as e:
+                self.view.display(
+                    f"Error while applying certificates: {e}",
+                    context="fatal", indent=2, level=0
+                )
+                exit(1)
 
             progress.update_subtask(cert_subtask, new_prefix="(1/1) Certificates applied successfully!")
             progress.remove_subtask(cert_subtask)
@@ -450,8 +537,35 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_main(new_prefix="Starting Wazuh indexer service...")
 
             service_subtask = progress.add_subtask("(1/1) Starting service...", total=1)
-            # TODO: (placeholder) systemctl enable wazuh-indexer && systemctl start wazuh-indexer
-            time.sleep(1)
+
+            if shutil.which("systemctl"):
+                try:
+                    subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True, capture_output=True,
+                                   text=True)
+                    subprocess.run(["sudo", "systemctl", "enable", "wazuh-indexer"], check=True, capture_output=True,
+                                   text=True)
+                    subprocess.run(["sudo", "systemctl", "start", "wazuh-indexer"], check=True, capture_output=True,
+                                   text=True)
+                except subprocess.CalledProcessError as e:
+                    self.view.display(f"Error while starting the wazuh indexer service: {e}", context="fatal", indent=2, level=0)
+                    exit(1)
+            elif shutil.which("service"):
+                if "apt" in packages:
+                    try:
+                        subprocess.run(["sudo","update-rc.d", "wazuh-indexer", "defaults", "95", "10"], check=True, capture_output=True,
+                                       text=True)
+                        subprocess.run(["sudo","service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while starting the wazuh indexer service, using service on debian like: {e}", context="fatal", indent=2, level=0)
+                        exit(1)
+                elif "yum" in packages or "dnf" in packages:
+                    try:
+                        subprocess.run(["sudo","chkconfig", "--add", "wazuh-indexer"], check=True, capture_output=True, text=True)
+                        subprocess.run(["sudo","service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
+                    except subprocess.CalledProcessError as e:
+                        self.view.display(f"Error while starting the wazuh indexer service, using service on redhat like: {e}", context="fatal", indent=2, level=0)
+                        exit(1)
+
 
             progress.update_subtask(service_subtask, new_prefix="(1/1) Service started!")
             progress.remove_subtask(service_subtask)
@@ -463,8 +577,13 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             progress.update_main(new_prefix="Initializing Wazuh cluster...")
 
             init_subtask = progress.add_subtask("(1/1) Launching indexer-security-init.sh...", total=1)
-            # TODO: (placeholder) /usr/share/wazuh-indexer/bin/indexer-security-init.sh
-            time.sleep(1)
+
+
+            try:
+                subprocess.run(["sudo", "/usr/share/wazuh-indexer/bin/indexer-security-init.sh"], check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as e:
+                self.view.display(f"Error while initializing the wazuh cluster: {e}", context="fatal", indent=2, level=0)
+                exit(1)
 
             progress.update_subtask(init_subtask, new_prefix="(1/1) Cluster initialized!")
             progress.remove_subtask(init_subtask)

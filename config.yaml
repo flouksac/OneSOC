@@ -96,6 +96,10 @@ Components:
 
     
     options: # THIS IS THE ONLY PART THE USER SHOULD CUSTOMIZE
+      wazuh-indexer-node-name-you-are-currently-installing: "wazuh-indexer-1" # <- change this
+      wazuh-indexer-certificates-path: "/tmp/wazuh-certificates.tar"
+
+
       wazuh-indexer-version: 4.9
       # Theses steps are important for the configuration and certificate deployment
       # more about here : https://documentation.wazuh.com/current/installation-guide/wazuh-indexer/step-by-step.html
@@ -121,9 +125,7 @@ Components:
       wazuh-dashboard-ip: "127.0.2.1"              # <- change this
 
       # /etc/wazuh-indexer/opensearch.yml configuration
-      network.host: "127.0.0.1"
-      node.name: "wazuh-indexer-1"  # depends on the name you set above, it is the current node name, you want to install
-      # discovery.seed_hosts: ["10.0.0.1", "10.0.0.2", "10.0.03"] # List of the addresses of the master-eligible nodes
+
       plugin.security.nodes_dn:
         - "CN=wazuh-indexer-1,OU=Wazuh,O=Wazuh,L=California,C=US"
         # - "CN=wazuh-indexer-2,OU=Wazuh,O=Wazuh,L=California,C=US"

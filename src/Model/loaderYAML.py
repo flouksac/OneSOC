@@ -20,8 +20,11 @@ class YamlLoader:
         except yaml.YAMLError:
             raise Exception("Erreur de format dans le fichier de configuration")  # TODO on passe ca plutot avec la vue ?
 
-    def save(self, config):
-        with open(self.file, 'w') as file:
-            yaml.dump(config, file, default_flow_style=False, sort_keys=False, Dumper=IndentedDumper)
-        
+    def save(self, config,custom_dumper=True):
+        if custom_dumper:
+            with open(self.file, 'w') as file:
+                yaml.dump(config, file, default_flow_style=False, sort_keys=False, Dumper=IndentedDumper)
+        else:
+            with open(self.file, 'w') as file:
+                yaml.dump(config, file, default_flow_style=False, sort_keys=False)
         
