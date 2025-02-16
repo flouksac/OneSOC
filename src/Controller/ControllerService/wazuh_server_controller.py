@@ -315,7 +315,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 exit(1)
 
             # Ajout des ips des indexer wazuh
-            config["hosts"] = ast.literal_eval(self._get_option("list-of-indexers-ip",True).value)
+            config["output.elasticsearch"]["hosts"] = ast.literal_eval(self._get_option("list-of-indexers-ip",True).value)
 
             self.view.display(f"filebeat.yml file updated with the provided settings :", context="info", indent=2, level=3)
             self.view.display_pretty_dict(config, level=3, indent=2)
