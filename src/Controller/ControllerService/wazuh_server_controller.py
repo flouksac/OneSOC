@@ -425,7 +425,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 # Replace the hosts section with the new IPs
                 new_hosts = ["<hosts>\n"]
                 for ip in indexers_ip:
-                    new_hosts.append(f"  <host>https://{ip}:9200/</host>\n")
+                    new_hosts.append(f"  <host>https://{ip}/</host>\n")
                 new_hosts.append("</hosts>\n")
 
                 ossec_conf[start_index:end_index + 1] = new_hosts
