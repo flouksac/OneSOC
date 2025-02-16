@@ -1,3 +1,4 @@
+import ast
 import os
 import shutil
 import subprocess
@@ -314,7 +315,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 exit(1)
 
             # Ajout des ips des indexer wazuh
-            config["hosts"] = self._get_option("list-of-indexers-ip",True).value
+            config["hosts"] = ast.literal_eval(self._get_option("list-of-indexers-ip",True).value)
 
             self.view.display(f"filebeat.yml file updated with the provided settings :", context="info", indent=2, level=3)
             self.view.display_pretty_dict(config, level=3, indent=2)
@@ -413,7 +414,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
             progress.update_subtask(connection_indexers, new_prefix="(2/2) Edit the local /var/ossec/etc/ossec.conf file...")
 
-            indexers_ip = self._get_option("list-of-indexers-ip", True).value
+            indexers_ip = ast.literal_eval(self._get_option("list-of-indexers-ip", True).value)
 
             try:
                 with open("/var/ossec/etc/ossec.conf", "r") as file:
