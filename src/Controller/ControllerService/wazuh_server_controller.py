@@ -346,7 +346,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
             node_name = self._get_option("node-name-you-are-currently-installing",True).value
 
             try:
-                subprocess.run(["mkdir", "/etc/filebeat/certs"], check=True,
+                subprocess.run(["mkdir", '-p',"/etc/filebeat/certs"], check=True,
                                capture_output=True, text=True)
 
                 subprocess.run([
