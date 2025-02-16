@@ -351,6 +351,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
                 subprocess.run([
                     "tar", "-xf", certs_tar_path, "-C", "/etc/filebeat/certs/", f"./{node_name}.pem",
+                    f"./{node_name}-key.pem", "./root-ca.pem"
                 ], check=True, capture_output=True, text=True)
 
                 subprocess.run([
