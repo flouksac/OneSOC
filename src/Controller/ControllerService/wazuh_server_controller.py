@@ -70,7 +70,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 try:
                     subprocess.run(["sudo", package_path, "update"], check=True, capture_output=True,text=True) # cwd
                     subprocess.run(["sudo", package_path, "install", "-y", "sed", "gnupg",
-                                   "apt-transport-https","curl","tee","tar"], check=True,text=True, capture_output=True)
+                                   "apt-transport-https","curl","tar"], check=True,text=True, capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
                     exit(1)
@@ -84,7 +84,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
                     exit(1)
 
-            required_commands = ["curl", "tar", "grep","tee"]
+            required_commands = ["curl", "tar", "grep"]
             for command in required_commands:
                 if not which(command):
                     self.view.display(f"Dependency {command} is missing after installation", context="fatal", indent=2,
