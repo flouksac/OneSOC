@@ -366,9 +366,9 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                     "chmod", "500", "/etc/filebeat/certs"
                 ], check=True, capture_output=True, text=True)
 
-                subprocess.run([
-                   "chmod", "400", "/etc/filebeat/certs/*"
-                ], check=True, capture_output=True, text=True)
+                #subprocess.run([
+                #   "chmod", "400", "/etc/filebeat/certs/*"
+                #], check=True, capture_output=True, text=True)
 
                 subprocess.run([
                     "chown", "-R", "root:root", "/etc/filebeat/certs"
