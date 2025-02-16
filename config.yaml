@@ -198,7 +198,7 @@ Components:
         MacOs: None
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
-      wazuh-server-node-name-you-are-currently-installing: "wazuh-server-1" # <- change this
+      wazuh-server-node-name-you-are-currently-installing: "wazuh-server-master" # <- change this
       wazuh-server-certificates-path: "/tmp/wazuh-certificates.tar" # The path where you have copied the certificates
 
       wazuh-server-version: 4.9
