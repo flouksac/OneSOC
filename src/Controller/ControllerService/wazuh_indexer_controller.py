@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-import socket
 import subprocess
 import time
 from shutil import which
@@ -14,7 +13,7 @@ from Controller.ControllerService.abstract_component_service_controller import A
 from Model.loaderYAML import YamlLoader
 
 
-class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre est important
+class Wazuh_Indexer_Controller(AbstractComponentServiceController):
     def __init__(self, options=None):
         super().__init__(options)
 
@@ -27,8 +26,6 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
         pass
 
     def healthcheck(self):
-
-
         # info
         # est ce que les containers sont sain
         # des erreurs dans les journaux ?
@@ -82,8 +79,8 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if "apt" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "update"], check=True, capture_output=True,text=True) # cwd
-                    subprocess.run(["sudo", package_path, "install", "-y", "curl", "tar", "grep", "debconf",
+                    subprocess.run([  package_path, "update"], check=True, capture_output=True,text=True) # cwd
+                    subprocess.run([  package_path, "install", "-y", "curl", "tar", "grep", "debconf",
                                    "adduser", "procps", "gnupg", "apt-transport-https"], check=True,text=True, capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
@@ -92,7 +89,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             elif "yum" in packages or "dnf" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
+                    subprocess.run([  package_path, "install", "-y", "coreutils", "curl", "tar", "grep"],
                                    check=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}",context="fatal", indent=2, level=0)
@@ -223,7 +220,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 progress.update_subtask(  certificates_subtask, new_prefix="(2/4) Making wazuh-certs-tool.sh executable..." )
 
                 try:
-                    subprocess.run(["sudo","/usr/bin/chmod", "+x", config_path], check=True, capture_output=True, text=True,cwd="/tmp")
+                    subprocess.run([ "/usr/bin/chmod", "+x", config_path], check=True, capture_output=True, text=True,cwd="/tmp")
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while adding execution right on wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
                     exit(1)
@@ -233,12 +230,12 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 try:
                     if os.path.exists(f"{workdir}/wazuh-certificates/"):
                         try :
-                            subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                            subprocess.run([  "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
                         except subprocess.CalledProcessError as e:
                             self.view.display(f"Error while removing old certificates: {e}", context="fatal", indent=2, level=0)
                             exit(1)
 
-                    subprocess.run(["sudo", f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
+                    subprocess.run([  f"{workdir}/wazuh-certs-tool.sh","-A"], check=True, capture_output=True, text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error when running wazuh-certs-tools: {e}", context="fatal", indent=2, level=0)
                     exit(1)
@@ -246,9 +243,9 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                 progress.update_subtask(certificates_subtask, new_prefix="(4/4) Compresseing certificates..." )
 
                 try :
-                    subprocess.run(["sudo", "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
+                    subprocess.run([  "/usr/bin/tar", "-cvf", f"{workdir}/wazuh-certificates.tar","-C",f"{workdir}/wazuh-certificates/", "."],
                                    check=True, capture_output=True, text=True,cwd=workdir)
-                    subprocess.run(["sudo", "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
+                    subprocess.run([  "/usr/bin/rm", "-rf", f"{workdir}/wazuh-certificates"], check=True, capture_output=True, text=True,cwd=workdir)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while compressing certificates: {e}", context="fatal", indent=2, level=0)
                     exit(1)
@@ -260,7 +257,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
                 progress.remove_subtask(certificates_subtask)
 
-            else :
+            else : #TODO modifier le context de skiping des certificats : soit c'est le cas de gen des certs / soit c'est le cas ou les certs doivent etre présentent...
                 self.view.display("Skip certificat generation because it's not the master indexer...", context="info", indent=2, level=0)
                 if self._get_option("certificates-path",True).value:
                     self.view.display(f"Please copy the certificates generated by the master indexer to {self._get_option('certificates-path',True).value}", context="info", indent=2, level=0)
@@ -294,7 +291,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                     )
 
                     subprocess.run(
-                        ["sudo", "gpg", "--no-default-keyring", "--keyring", "gnupg-ring:/usr/share/keyrings/wazuh.gpg",
+                        [  "gpg", "--no-default-keyring", "--keyring", "gnupg-ring:/usr/share/keyrings/wazuh.gpg",
                          "--import"],
                         input=curl_proc.stdout,
                         check=True,
@@ -303,7 +300,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
                     )
 
                     subprocess.run(
-                        ["sudo", "chmod", "644", "/usr/share/keyrings/wazuh.gpg"],
+                        [  "chmod", "644", "/usr/share/keyrings/wazuh.gpg"],
                         check=True,
                         capture_output=True,
                         text=True
@@ -316,7 +313,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             elif "yum" in packages or "dnf" in packages:
                 try:
-                    subprocess.run(["sudo", "rpm", "--import", "https://packages.wazuh.com/key/GPG-KEY-WAZUH"],
+                    subprocess.run([  "rpm", "--import", "https://packages.wazuh.com/key/GPG-KEY-WAZUH"],
                                    check=True, capture_output=True,text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while importing the wazuh gpg key on redhat based system: {e}",
@@ -343,13 +340,13 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
                         # 2) Run 'tee' and pass `repo_string` as input
                         subprocess.run(
-                            ["sudo", "tee", "-a", "/etc/apt/sources.list.d/wazuh.list"],
+                            [  "tee", "-a", "/etc/apt/sources.list.d/wazuh.list"],
                             input=repo_string,
                             text=True,
                             check=True,
                             capture_output=True
                         )
-                        subprocess.run(["sudo", "/usr/bin/apt", "update"], check=True, capture_output=True, text=True)
+                        subprocess.run([  "/usr/bin/apt", "update"], check=True, capture_output=True, text=True)
                     except subprocess.CalledProcessError as e:
                         self.view.display(f"Error while adding the wazuh repository on debian based system: {e}",
                                           context="fatal", indent=2, level=0)
@@ -378,7 +375,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
                         # Use 'tee' to write the content to /etc/yum.repos.d/wazuh.repo
                         subprocess.run(
-                            ["sudo", "tee", "/etc/yum.repos.d/wazuh.repo"],
+                            [  "tee", "/etc/yum.repos.d/wazuh.repo"],
                             input=repo_string,
                             text=True,
                             check=True,
@@ -406,7 +403,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if "apt" in packages:
                 try:
-                    subprocess.run(["sudo", "/usr/bin/apt", "install", "-y", "wazuh-indexer"],
+                    subprocess.run([  "/usr/bin/apt", "install", "-y", "wazuh-indexer"],
                                    check=True, capture_output=True, text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while installing the wazuh indexer on debian based system: {e}",
@@ -416,7 +413,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             elif "yum" in packages or "dnf" in packages:
                 try:
-                    subprocess.run(["sudo", package_path, "install", "-y", "wazuh-indexer"],
+                    subprocess.run([  package_path, "install", "-y", "wazuh-indexer"],
                                    check=True, capture_output=True, text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while installing the wazuh indexer on redhat based system: {e}",
@@ -488,11 +485,11 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             try:
                 # 1) Make sure /etc/wazuh-indexer/certs exists
-                subprocess.run(["sudo", "mkdir", "-p", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
+                subprocess.run([  "mkdir", "-p", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
 
                 # 2) Extract only necessary certificates from the tar file
                 subprocess.run([
-                    "sudo", "tar", "-xf", certs_path,
+                      "tar", "-xf", certs_path,
                     "-C", "/etc/wazuh-indexer/certs/",
                     f"./{node_name}.pem",
                     f"./{node_name}-key.pem",
@@ -503,26 +500,26 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
                 # 3) Rename the node’s PEM and KEY to indexer.pem and indexer-key.pem
                 subprocess.run([
-                    "sudo", "mv", "-n",
+                      "mv", "-n",
                     f"/etc/wazuh-indexer/certs/{node_name}.pem",
                     "/etc/wazuh-indexer/certs/indexer.pem"
                 ], check=True, capture_output=True, text=True)
 
                 subprocess.run([
-                    "sudo", "mv", "-n",
+                      "mv", "-n",
                     f"/etc/wazuh-indexer/certs/{node_name}-key.pem",
                     "/etc/wazuh-indexer/certs/indexer-key.pem"
                 ],check=True, capture_output=True, text=True)
 
                 # 4) Secure permissions on the directory and files
-                subprocess.run(["sudo", "chmod", "500", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
+                subprocess.run(["chmod", "500", "/etc/wazuh-indexer/certs"], check=True, capture_output=True, text=True)
 
                 files = glob.glob("/etc/wazuh-indexer/certs/*")  # expands to a list of all matching files
 
-                subprocess.run(["sudo", "chmod", "400", *files], check=True, capture_output=True, text=True)
+                subprocess.run(["chmod", "400", *files], check=True, capture_output=True, text=True)
 
                 # 5) Adjust ownership
-                subprocess.run(["sudo", "chown", "-R", "wazuh-indexer:wazuh-indexer", "/etc/wazuh-indexer/certs"],
+                subprocess.run(["chown", "-R", "wazuh-indexer:wazuh-indexer", "/etc/wazuh-indexer/certs"],
                                check=True, capture_output=True, text=True)
 
             except subprocess.CalledProcessError as e:
@@ -546,11 +543,11 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
             if shutil.which("systemctl"):
                 try:
-                    subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True, capture_output=True,
+                    subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True,
                                    text=True)
-                    subprocess.run(["sudo", "systemctl", "enable", "wazuh-indexer"], check=True, capture_output=True,
+                    subprocess.run([ "systemctl", "enable", "wazuh-indexer"], check=True, capture_output=True,
                                    text=True)
-                    subprocess.run(["sudo", "systemctl", "start", "wazuh-indexer"], check=True, capture_output=True,
+                    subprocess.run(["systemctl", "start", "wazuh-indexer"], check=True, capture_output=True,
                                    text=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error while starting the wazuh indexer service: {e}", context="fatal", indent=2, level=0)
@@ -558,16 +555,16 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
             elif shutil.which("service"):
                 if "apt" in packages:
                     try:
-                        subprocess.run(["sudo","update-rc.d", "wazuh-indexer", "defaults", "95", "10"], check=True, capture_output=True,
+                        subprocess.run(["update-rc.d", "wazuh-indexer", "defaults", "95", "10"], check=True, capture_output=True,
                                        text=True)
-                        subprocess.run(["sudo","service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
+                        subprocess.run(["service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
                     except subprocess.CalledProcessError as e:
                         self.view.display(f"Error while starting the wazuh indexer service, using service on debian like: {e}", context="fatal", indent=2, level=0)
                         exit(1)
                 elif "yum" in packages or "dnf" in packages:
                     try:
-                        subprocess.run(["sudo","chkconfig", "--add", "wazuh-indexer"], check=True, capture_output=True, text=True)
-                        subprocess.run(["sudo","service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
+                        subprocess.run(["chkconfig", "--add", "wazuh-indexer"], check=True, capture_output=True, text=True)
+                        subprocess.run(["service", "wazuh-indexer", "start"], check=True, capture_output=True, text=True)
                     except subprocess.CalledProcessError as e:
                         self.view.display(f"Error while starting the wazuh indexer service, using service on redhat like: {e}", context="fatal", indent=2, level=0)
                         exit(1)
@@ -585,7 +582,7 @@ class Wazuh_Indexer_Controller(AbstractComponentServiceController):  # L'odre es
 
 
             try:
-                subprocess.run(["sudo", "/usr/share/wazuh-indexer/bin/indexer-security-init.sh"], check=True, capture_output=True, text=True)
+                subprocess.run([  "/usr/share/wazuh-indexer/bin/indexer-security-init.sh"], check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as e:
                 self.view.display(f"Error while initializing the wazuh cluster: {e}", context="fatal", indent=2, level=0)
                 exit(1)

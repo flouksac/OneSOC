@@ -198,8 +198,16 @@ Components:
         MacOs: None
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
-      wazuh-server-ip: "127.0.0.1" # <- change this
-      wazuh-server-port: 1515
+      wazuh-server-node-name-you-are-currently-installing: "wazuh-server-1" # <- change this
+      wazuh-server-certificates-path: "/tmp/wazuh-certificates.tar" # The path where you have copied the certificates
+
+      wazuh-server-version: 4.9
+
+      wazuh-server-list-of-indexers-ip:
+        - "127.0.0.1:9200"
+        # - "127.0.0.2:9200"
+      wazuh-server-indexer-username: "admin"
+      wazuh-server-indexer-password: "admin"
 
 
   Wazuh-Dashboard:
