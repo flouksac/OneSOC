@@ -322,6 +322,46 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
             loader.save(config)
 
+            try:
+                subprocess.run([
+                    "filebeat","keystore","create"
+                ], check=True, capture_output=True, text=True)
+
+                subprocess.run([
+                    "filebeat", "keystore", "add", "username", "--stdin", "--force"
+                ], input=self._get_option("indexer-username", True).value, check=True,
+                    capture_output=True, text=True)
+
+                subprocess.run([
+                    "filebeat", "keystore", "add", "password", "--stdin", "--force"
+                ], input=self._get_option("indexer-password", True).value, check=True,
+                    capture_output=True, text=True)
+
+                subprocess.run([
+                    "curl ", "-so", "/etc/filebeat/wazuh-template.json",
+                    f"https://raw.githubusercontent.com/wazuh/wazuh/{self._get_option("version",True)}/extensions/elasticsearch/7.x/wazuh-template.json"
+                ], check=True,capture_output=True, text=True)
+
+                subprocess.run([
+                    "chmod", "go+r", "/etc/filebeat/wazuh-template.json"
+                ], check=True, capture_output=True, text=True)
+
+                filebeat_tar = subprocess.run([
+                    "curl ", "-s", "https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz"
+                ], check=True, capture_output=True, text=True)
+
+                subprocess.run([
+                    "tar", "-xvz", "-C", "/usr/share/filebeat/module",
+                ], input=filebeat_tar.stdout, check=True,  capture_output=True, text=True)
+
+            except subprocess.CalledProcessError as e:
+                self.view.display(
+                    f"Error while applying certificates: {e}",
+                    context="fatal", indent=2, level=0
+                )
+                exit(1)
+
+
             progress.update_subtask(filebeat_subtask, new_prefix="(3/3) Filebeat ready")
             progress.remove_subtask(filebeat_subtask)
 
