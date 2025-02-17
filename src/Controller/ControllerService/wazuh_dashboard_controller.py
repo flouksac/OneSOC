@@ -270,8 +270,10 @@ class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre 
             # server.host = ip ou domaine ou 0.0.0.0
             config["server.host"] = self._get_option("listen-ip", True).value
 
+
+            list_of_indexers_ip =  ast.literal_eval(self._get_option("list-of-indexers-ip", True).value)
             # opensearch.hosts : les indexers en list
-            config["opensearch.hosts"] = ast.literal_eval(self._get_option("list-of-indexers-ip", True).value)
+            config["opensearch.hosts"] = list_of_indexers_ip[0] if len(list_of_indexers_ip) == 1 else list_of_indexers_ip
 
             # changement du fichier /etc/wazuh-dashboard/opensearch_dashboards.yml
             loader.save(config)
