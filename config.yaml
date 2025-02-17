@@ -276,8 +276,18 @@ Components:
 
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
-      wazuh-dashboard-ip: "127.0.0.1" # <- change this
-      wazuh-dashboard-port: 1515
+      wazuh-dashboard-node-name-you-are-currently-installing: "wazuh-server-master" # <- change this
+      wazuh-dashboard-certificates-path: "/tmp/wazuh-certificates.tar" # The path where you have copied the certificates
+
+      wazuh-dashboard-version: 4.9
+
+
+
+      wazuh-dashboard-list-of-indexers-ip:
+        - "127.0.0.1:9200"
+        # - "127.0.0.2:9200"
+      wazuh-dashboard-indexer-username: "admin"
+      wazuh-dashboard-indexer-password: "admin"
 
 
   Wazuh-Agent:
