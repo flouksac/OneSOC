@@ -330,7 +330,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 progress.update_subtask(filebeat_subtask, new_prefix="(3/7) Creating keystore for filebeat...")
 
                 subprocess.run([
-                    "filebeat","keystore","create"
+                    "filebeat","keystore","create", "--force"
                 ], check=True, capture_output=True, text=True)
 
                 subprocess.run([
