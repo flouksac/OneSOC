@@ -62,7 +62,7 @@ class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre 
             if "apt" in packages:
                 try:
                     subprocess.run(["sudo", package_path, "update"], check=True, capture_output=True, text=True)  # cwd
-                    subprocess.run(["sudo", package_path, "install", "-y", "debhelper", "gnupg","libcap2-bin"
+                    subprocess.run(["sudo", package_path, "install", "-y", "debhelper", "gnupg","libcap2-bin",
                                     "apt-transport-https", "curl", "tar"], check=True, text=True, capture_output=True)
                 except subprocess.CalledProcessError as e:
                     self.view.display(f"Error: {e}", context="fatal", indent=2, level=0)
