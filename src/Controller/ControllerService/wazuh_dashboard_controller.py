@@ -403,6 +403,8 @@ class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre 
             # edit /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
             wazuh_yml = "/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
 
+            time.sleep(10)
+
             # avec l'ip du master node
             try :
                 loader = YamlLoader(wazuh_yml)
