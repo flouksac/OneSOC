@@ -418,8 +418,7 @@ class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre 
                 self.view.display(f"Error: Couldn't find wazuh.yml file, {e}", context="fatal", indent=2, level=0)
                 exit(1)
 
-            # Ajout des ips des indexer wazuh
-            config["hosts"][0]["url"] = self._get_option("wazuh-server-master-ip",True).value
+            config["hosts"][0]["default"]["url"] = "https://"+self._get_option("wazuh-server-master-ip",True).value
 
             self.view.display(f"wazuh.yml file updated with the provided settings :", context="info", indent=2, level=3)
             self.view.display_pretty_dict(config, level=3, indent=2)
