@@ -283,6 +283,8 @@ Components:
 
       wazuh-dashboard-listen-ip: 0.0.0.0
 
+      wazuh-dashboard-wazuh-server-master-ip: 127.0.0.1
+
       wazuh-dashboard-list-of-indexers-ip:
         - "127.0.0.1:9200"
         # - "127.0.0.2:9200"

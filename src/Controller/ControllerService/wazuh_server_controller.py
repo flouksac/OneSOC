@@ -306,7 +306,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 loader = YamlLoader(filebeat_path)
                 config:dict = loader.data
             except yaml.YAMLError as e:
-                self.view.display(f"Error: Couldn't parse config.yml file, {e}", context="fatal", indent=2, level=0)
+                self.view.display(f"Error: Couldn't parse filebeat.yml file, {e}", context="fatal", indent=2, level=0)
                 if os.path.exists(filebeat_path):
                     os.remove(filebeat_path)
                 exit(1)
