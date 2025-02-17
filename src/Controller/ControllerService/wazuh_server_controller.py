@@ -26,7 +26,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
         super().install()
 
         with self.view.display_progress(f"Installation initialization of {self.component_name}...", indent=1,
-                                        total_size=10) as progress:
+                                        total_size=9) as progress:
 
             # ----------------------------------------------------------------------------
             # Étape 0 : Installation of curl and tar grep + dependencies
@@ -216,7 +216,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                                           context="fatal", indent=2, level=0)
                         exit(1)
 
-            progress.update_subtask(repo_subtask, new_prefix="(3/3) Repository ready...")
+            progress.update_subtask(repo_subtask, new_prefix="(3/3) Repository Installed...")
             progress.remove_subtask(repo_subtask)
 
             # ----------------------------------------------------------------------------
@@ -224,7 +224,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Installing Wazuh Manager package...")
 
-            install_subtask = progress.add_subtask("(1/1) Installing wazuh-manager...", total=1)
+            install_subtask = progress.add_subtask("(1/1) Installing wazuh-manager...", total=2)
 
             packages = self.host.get_host().package  # package is a list
 
@@ -255,7 +255,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Installing filebeat package...")
 
-            install_subtask = progress.add_subtask("(1/1) Installing filebeat...", total=1)
+            install_subtask = progress.add_subtask("(1/1) Installing filebeat...", total=2)
 
             packages = self.host.get_host().package  # package is a list
 
@@ -285,7 +285,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
             # Étape 5 : Configuration de FileBeat
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Adjusting filebeat's config.yml file from the provided settings...")
-            filebeat_subtask = progress.add_subtask("(1/3) Getting Wazuh filebeat file...", 3)
+            filebeat_subtask = progress.add_subtask("(1/7) Getting Wazuh filebeat file...", 7)
 
             url = f"https://packages.wazuh.com/{self._get_option('version', True).value}/tpl/wazuh/filebeat/filebeat.yml"
             response = requests.get(url, stream=True)
@@ -300,7 +300,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                                   context="fatal", indent=2, level=0)
                 exit(1)
 
-            progress.update_subtask(filebeat_subtask, new_prefix="(2/3) Modifying filebeat.yml...")
+            progress.update_subtask(filebeat_subtask, new_prefix="(2/7) Modifying filebeat.yml...")
 
             try :
                 loader = YamlLoader(filebeat_path)
@@ -324,7 +324,11 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
             loader.save(config)
 
+
+
             try:
+                progress.update_subtask(filebeat_subtask, new_prefix="(3/7) Creating keystore for filebeat...")
+
                 subprocess.run([
                     "filebeat","keystore","create"
                 ], check=True, capture_output=True, text=True)
@@ -339,8 +343,10 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 ], input=self._get_option("indexer-password", True).value, check=True,
                     capture_output=True, text=True)
 
+                progress.update_subtask(filebeat_subtask, new_prefix="(4/7) Getting Wazuh template for filebeat...")
+
                 subprocess.run([
-                    "curl ", "-so", "/etc/filebeat/wazuh-template.json",
+                    "curl", "-so", "/etc/filebeat/wazuh-template.json",
                     f"https://raw.githubusercontent.com/wazuh/wazuh/{self._get_option("version",True)}/extensions/elasticsearch/7.x/wazuh-template.json"
                 ], check=True,capture_output=True, text=True)
 
@@ -348,9 +354,14 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                     "chmod", "go+r", "/etc/filebeat/wazuh-template.json"
                 ], check=True, capture_output=True, text=True)
 
+                progress.update_subtask(filebeat_subtask, new_prefix="(5/7) Getting Wazuh module for filebeat...")
+
+
                 filebeat_tar = subprocess.run([
-                    "curl ", "-s", "https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz"
+                    "curl", "-s", "https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz"
                 ], check=True, capture_output=True, text=True)
+
+                progress.update_subtask(filebeat_subtask, new_prefix="(6/7) UnTar Wazuh module for filebeat...")
 
                 subprocess.run([
                     "tar", "-xvz", "-C", "/usr/share/filebeat/module",
@@ -364,7 +375,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 exit(1)
 
 
-            progress.update_subtask(filebeat_subtask, new_prefix="(3/3) Filebeat ready")
+            progress.update_subtask(filebeat_subtask, new_prefix="(7/7) Filebeat ready")
             progress.remove_subtask(filebeat_subtask)
 
 
@@ -372,7 +383,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
             # Étape 6 : Appliquer les certificats (commandes successives)
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Applying certificates...")
-            cert_subtask = progress.add_subtask("(1/1) Copying / applying certs...", total=1)
+            cert_subtask = progress.add_subtask("(1/3) Copying / applying certs...", total=3)
 
 
             # si les certificats ne sont pas sur le chemin entrée, on exit
@@ -405,6 +416,8 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                     "mv", "-n", f"/etc/filebeat/certs/{node_name}-key.pem", "/etc/filebeat/certs/filebeat-key.pem"
                 ], check=True, capture_output=True, text=True)
 
+                progress.update_subtask(cert_subtask, new_prefix="(2/3) Changing permissions...")
+
                 subprocess.run([
                     "chmod", "500", "/etc/filebeat/certs"
                 ], check=True, capture_output=True, text=True)
@@ -425,14 +438,14 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 )
                 exit(1)
 
-            progress.update_subtask(cert_subtask, new_prefix="(1/1) Certificates applied successfully!")
+            progress.update_subtask(cert_subtask, new_prefix="(3/3) Certificates applied successfully!")
             progress.remove_subtask(cert_subtask)
 
             # ----------------------------------------------------------------------------
             # Étape 7 : Configuration des connections avec les indexers wazuh
             # ----------------------------------------------------------------------------
             progress.update_main(new_prefix="Configuring connections with the indexers...")
-            connection_indexers = progress.add_subtask("(1/2) Save the Wazuh indexer username and password", total=2)
+            connection_indexers = progress.add_subtask("(1/3) Save the Wazuh indexer username and password", total=3)
 
 
             try:
@@ -454,7 +467,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 )
                 exit(1)
 
-            progress.update_subtask(connection_indexers, new_prefix="(2/2) Edit the local /var/ossec/etc/ossec.conf file...")
+            progress.update_subtask(connection_indexers, new_prefix="(2/3) Edit the local /var/ossec/etc/ossec.conf file...")
 
             indexers_ip = ast.literal_eval(self._get_option("list-of-indexers-ip", True).value)
 
@@ -481,6 +494,9 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
                 self.view.display(f"Error: Couldn't update /var/ossec/etc/ossec.conf file, {e}", context="fatal",
                                   indent=2, level=0)
                 exit(1)
+
+            progress.update_subtask(connection_indexers, new_prefix="(3/3) /var/ossec/etc/ossec.conf edited successfuly...")
+            progress.remove_subtask(connection_indexers)
 
             # ----------------------------------------------------------------------------
             # Étape 8 : Lancement du service Wazuh (systemd ou sysv)
