@@ -276,7 +276,7 @@ Components:
 
 
     options: # THIS IS THE ONLY PART YOU SHOULD CUSTOMIZE
-      wazuh-dashboard-node-name-you-are-currently-installing: "wazuh-server-master" # <- change this
+      wazuh-dashboard-node-name-you-are-currently-installing: "wazuh-dashboard" # <- change this
       wazuh-dashboard-certificates-path: "/tmp/wazuh-certificates.tar" # The path where you have copied the certificates
 
       wazuh-dashboard-version: 4.9
