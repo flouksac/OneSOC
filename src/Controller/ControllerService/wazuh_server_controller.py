@@ -359,13 +359,13 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
                 filebeat_tar = subprocess.run([
                     "curl", "-s", "https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz"
-                ], check=True, capture_output=True, text=True)
+                ], check=True, capture_output=True)
 
                 progress.update_subtask(filebeat_subtask, new_prefix="(6/7) UnTar Wazuh module for filebeat...")
 
                 subprocess.run([
                     "tar", "-xvz", "-C", "/usr/share/filebeat/module",
-                ], input=filebeat_tar.stdout, check=True,  capture_output=True, text=True)
+                ], input=filebeat_tar.stdout, check=True,  capture_output=True)
 
             except subprocess.CalledProcessError as e:
                 self.view.display(
