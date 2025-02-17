@@ -347,7 +347,7 @@ class Wazuh_Server_Controller(AbstractComponentServiceController):
 
                 subprocess.run([
                     "curl", "-so", "/etc/filebeat/wazuh-template.json",
-                    f"https://raw.githubusercontent.com/wazuh/wazuh/{self._get_option("version",True)}/extensions/elasticsearch/7.x/wazuh-template.json"
+                    f"https://raw.githubusercontent.com/wazuh/wazuh/{self._get_option("version",True).value}/extensions/elasticsearch/7.x/wazuh-template.json"
                 ], check=True,capture_output=True, text=True)
 
                 subprocess.run([
