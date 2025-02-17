@@ -281,7 +281,7 @@ Components:
 
       wazuh-dashboard-version: 4.9
 
-
+      wazuh-dashboard-listen-ip: 0.0.0.0
 
       wazuh-dashboard-list-of-indexers-ip:
         - "127.0.0.1:9200"

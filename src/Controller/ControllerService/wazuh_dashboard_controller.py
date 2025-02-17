@@ -1,9 +1,13 @@
+import ast
+import os
 import subprocess
 import time
 from shutil import which
 
+import yaml
+
 from Controller.ControllerService.abstract_component_service_controller import AbstractComponentServiceController
- 
+from Model.loaderYAML import YamlLoader
 
 
 class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre est important
@@ -245,12 +249,34 @@ class Wazuh_Dashboard_Controller(AbstractComponentServiceController):  # L'odre 
             # ----------------------------------------------------------------------------
             # Étape 4 : Configuring the wazuh dashboard
             # ----------------------------------------------------------------------------
+            progress.update_main(new_prefix="Adjusting opensearch_dashboards.yml file from the provided settings...")
+            opensearch_dashboards_yaml = progress.add_subtask("(1/2) loading this file...", 7)
+
+            opensearch_dashboards_path = "/etc/wazuh-dashboard/opensearch_dashboards.yml"
+
+            try :
+                loader = YamlLoader(opensearch_dashboards_path)
+                config:dict = loader.data
+            except yaml.YAMLError as e:
+                self.view.display(f"Error: Couldn't parse opensearch_dashboards.yml file, {e}", context="fatal", indent=2, level=0)
+                if os.path.exists(opensearch_dashboards_path):
+                    os.remove(opensearch_dashboards_path)
+                exit(1)
+            except FileNotFoundError as e:
+                self.view.display(f"Error: Couldn't find opensearch_dashboards.yml file, {e}", context="fatal", indent=2, level=0)
+                exit(1)
 
             # server.host = ip ou domaine ou 0.0.0.0
+            config["server.host"] = self._get_option("listen-ip", True).value
 
             # opensearch.hosts : les indexers en list
+            config["opensearch.hosts"] = ast.literal_eval(self._get_option("list-of-indexers-ip", True).value)
 
             # changement du fichier /etc/wazuh-dashboard/opensearch_dashboards.yml
+            loader.save(config)
+
+            progress.update_subtask(opensearch_dashboards_yaml, new_prefix="(2/2) File updated successfully!")
+            progress.remove_subtask(opensearch_dashboards_yaml)
 
 
             # ----------------------------------------------------------------------------
